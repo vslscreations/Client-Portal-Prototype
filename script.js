@@ -54,15 +54,18 @@ setTimeout(()=>{
 
 
 
-    if(lowerText.includes("pickup")){
+    if(lowerText.includes("appointment")){
+    lowerText.includes("schedule") ||
+    lowerText.includes("book") ||
+    lowerText.includes("meeting")
 
         response = `
-        I'd be happy to help schedule a pickup.
+        I'd be happy to help schedule an appointment.
 
         <br><br>
 
         <button onclick="location.href='pickup.html'">
-        📦 Start Pickup Request
+        Schedule Appointment
         </button>
         `;
 
