@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Owner Dashboard | DasherLab</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+
+<div class="app">
+
+
+<!-- TOP NAVIGATION -->
+
+<header class="top-nav">
+
+<img src="images/logo.png" class="logo">
+
+
+<div class="menu-button" onclick="toggleMenu()">
+
+☰
+
+</div>
+
+</header>
+
+
+
+<!-- SIDE MENU -->
+
+<div class="side-menu" id="sideMenu">
+
+
+<button class="close-menu" onclick="toggleMenu()">
+
+✕
+
+</button>
+
+
+<a href="index.html">
+Home
+</a>
+
+
+<a href="dashboard.html">
+Owner's Dashboard
+</a>
+
+
+<a href="pickup.html">
+Request Pickup
+</a>
+
+
+</div>
+
+
+
+
+<!-- PAGE HEADER -->
+
+<div class="page-header">
+
+<h1>
+Owner's Dashboard
+</h1>
+
+</div>
+
+
+
+
+<!-- AVERY CARD -->
+
+<div class="avery-card">
+
+
+<div class="avery-header">
+
+
+<img src="images/avery.png" class="avery-small-avatar">
+
+
+<div>
+
+<strong>
+Avery
+</strong>
+
+<br>
+
+<span>
+Virtual Dispatch Coordinator
+</span>
+
+
+<br>
+
+<small>
+Powered by EskoDSK AI
+</small>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="avery-bubble">
+
+<p>
+
+<p>Welcome back, manage your delivery operations from one place.</p>
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+
+<main class="dashboard-container">
+
+<div class="dispatch-overview">
+
+
+<h2>
+Dispatch Overview
+</h2>
+
+
+<div class="overview-grid">
+
+
+<div class="overview-card">
+
+<h3 id="pendingCount">
+0
+</h3>
+
+<p>
+📥 Pending Requests
+</p>
+
+</div>
+
+
+
+<div class="overview-card">
+
+<h3 id="acceptedCount">
+0
+</h3>
+
+<p>
+✅ Accepted
+</p>
+
+</div>
+
+
+
+<div class="overview-card">
+
+<h3 id="assignedCount">
+0
+</h3>
+
+<p>
+🚚 Active Deliveries
+</p>
+
+</div>
+
+
+
+<div class="overview-card">
+
+<h3 id="completedCount">
+0
+</h3>
+
+<p>
+✔ Completed
+</p>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<div class="dashboard-card">
+
+<h2>
+📦 New Requests
+</h2>
+
+
+<div id="requestList">
+
+<p>
+No new requests yet.
+</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="dashboard-card">
+
+<h2>
+🚚 Today's Deliveries
+</h2>
+
+<p>
+No deliveries scheduled.
+</p>
+
+
+</div>
+
+
+
+
+<div class="dashboard-card">
+
+<h2>
+💬 Messages
+</h2>
+
+<p>
+No new messages.
+</p>
+
+
+</div>
+
+
+
+
+</main>
+
+
+</div>
+
+
+
+<script src="script.js"></script>
+
+<script>
+
+loadDashboard();
+
+</script>
+
+</body>
+
+</html>

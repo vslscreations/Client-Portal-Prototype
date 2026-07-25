@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DasherLab Client Portal</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="images/app-icon.png">
+</head>
+
+<body>
+
+<div class="app">
+
+<header class="top-nav">
+
+    <img src="images/logo.png" class="logo">
+
+
+    <div class="menu-button" onclick="toggleMenu()">
+
+        ☰
+
+    </div>
+
+</header>
+
+
+<div class="side-menu" id="sideMenu">
+
+    <button class="close-menu" onclick="toggleMenu()">
+
+✕
+
+</button>
+    <a href="dashboard.html">
+        📊 Owner's Dashboard
+    </a>
+
+    <a href="pickup.html">
+        📦 Request Pickup
+    </a>
+
+    <a href="quote.html">
+        💰 Request Quote
+    </a>
+
+    <a href="contact.html">
+        💬 Contact Dispatch
+    </a>
+
+</div>
+    <main class="home">
+
+  
+<section class="ai-welcome">
+
+<div class="ai-avatar">
+    <img src="images/avery.png" alt="Avery - Virtual Dispatch Coordinator">
+</div>
+
+    <h2>
+        Avery
+    </h2>
+
+
+    <h3>
+        Virtual Dispatch Coordinator
+    </h3>
+
+
+    <p class="powered">
+        Powered by <strong>EskoDSK AI</strong>
+    </p>
+
+
+<div class="chat-container">
+
+
+    <div class="messages" id="messages">
+
+        <div class="message avery-message">
+
+            <strong>Avery:</strong>
+
+            Hi! I'm here to help with schedule pickups,
+            answer questions, or connect you with dispatch.
+
+        </div>
+
+
+    </div>
+
+
+
+    <div class="chat-box">
+
+        <input 
+        id="userInput"
+        type="text"
+        placeholder="Message Avery..."
+        >
+
+
+        <button onclick="sendMessage()">
+
+            Send
+
+        </button>
+
+    </div>
+
+
+</div>
+</section>
+
+    <section class="quick-actions">
+
+        <h3>
+            Need something specific?
+        </h3>
+
+
+        <div class="action-card" onclick="location.href='pickup.html'">
+
+            📦
+
+            <div>
+                <strong>Request Pickup</strong>
+                <p>Schedule a delivery</p>
+            </div>
+
+        </div>
+
+
+        <div class="action-card" onclick="location.href='quote.html'">
+
+            💰
+
+            <div>
+                <strong>Request Quote</strong>
+                <p>Get delivery pricing</p>
+            </div>
+
+        </div>
+
+        
+        <div class="action-card" onclick="location.href='contact.html'">
+
+            📞
+
+            <div>
+                <strong>Contact Dispatch</strong>
+                <p>Speak with our team</p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+</main>
+    <footer>
+
+        Powered by <strong>EskoDSK AI</strong>
+
+    </footer>
+<nav class="bottom-nav">
+
+    <a href="index.html">
+        🏠
+        <span>Home</span>
+    </a>
+
+
+    <a href="#">
+        📦
+        <span>Requests</span>
+    </a>
+
+
+    <a href="#">
+        👤
+        <span>Account</span>
+    </a>
+
+
+</nav>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "DasherLab Client Portal",
+  "short_name": "DasherLab",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b2e59",
+  "icons": [
+    {
+      "src": "images/app-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Request Pickup | DasherLab</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+<div class="app">
+
+<header class="top-nav">
+
+    <img src="images/logo.png" class="logo">
+
+
+    <div class="menu-button" onclick="toggleMenu()">
+
+        ☰
+
+    </div>
+
+<header class="top-nav">
+
+    <img src="images/logo.png" class="logo">
+
+    <div class="menu-button" onclick="toggleMenu()">
+
+        ☰
+
+    </div>
+
+</header>
+
+<div class="side-menu" id="sideMenu">
+
+    <a href="index.html">🏠 Home</a>
+
+    <a href="dashboard.html">📊 Dashboard</a>
+
+    <a href="pickup.html">📦 Pickup</a>
+
+    <a href="quote.html">💰 Quotes</a>
+
+    <a href="contact.html">📞 Contact Dispatch</a>
+
+</div>
+
+<div class="page-header">
+
+    <h1>📦 Request Pickup</h1>
+
+    <p>Let's get your delivery started.</p>
+
+</div>
+
+<div class="avery-card">
+
+    <div class="avery-header">
+
+        <img src="images/avery.png" class="avery-small-avatar">
+
+        <div>
+
+            <strong>Avery</strong><br>
+
+            <span>Virtual Dispatch Coordinator</span><br>
+
+            <small>Powered by EskoDSK AI</small>
+
+        </div>
+
+    </div>
+
+    <div class="avery-bubble">
+
+        <p id="averyPrompt">
+
+            I'll help you schedule your pickup.
+            Let's start with the pickup information below.
+
+        </p>
+
+    </div>
+
+</div>
+
+<main class="pickup-container">
+
+        <div class="progress">
+
+            <p>Step 1 of 4</p>
+
+            <div class="progress-bar">
+
+                <div class="progress-fill"></div>
+
+            </div>
+
+        </div>
+
+
+<div class="form-card" id="step1">
+
+
+<h2>📍 Pickup Information</h2>
+
+
+<label>
+Company Name
+</label>
+
+<input type="text" id="company" placeholder="Company (optional)">
+
+
+
+<label>
+Contact Name
+</label>
+
+<input type="text" id="contact" placeholder="Your name">
+
+
+
+<label>
+Pickup Address
+</label>
+
+<input type="text" id="pickupAddress" placeholder="Street address">
+
+
+
+<label>
+Phone Number
+</label>
+
+<input type="tel" id="phone" placeholder="Phone number">
+
+
+
+<button class="primary-button" onclick="nextStep(2)">
+Next →
+</button>
+
+
+</div>
+
+
+
+<div class="form-card hidden" id="step2">
+
+
+<h2>🏥 Delivery Information</h2>
+
+
+<label>
+Delivery Location
+</label>
+
+<input type="text" id="deliveryAddress" placeholder="Delivery address">
+
+
+
+<label>
+Recipient Name
+</label>
+
+<input type="text" id="recipient" placeholder="Recipient name">
+
+
+
+<label>
+Delivery Phone
+</label>
+
+<input type="tel" id="deliveryPhone" placeholder="Recipient phone">
+
+
+
+<button class="primary-button" onclick="nextStep(3)">
+Next →
+</button>
+
+
+</div>
+
+
+
+<div class="form-card hidden" id="step3">
+
+
+<h2>📅 Request Details</h2>
+
+
+<label>
+Pickup Date
+</label>
+
+<input type="date" id="date">
+
+
+
+<label>
+Preferred Pickup Time
+</label>
+
+<input type="time" id="time">
+
+
+
+<label>
+Additional Notes
+</label>
+
+<textarea id="notes" placeholder="Special instructions"></textarea>
+
+
+<button class="primary-button" onclick="nextStep(4)">
+Review Request →
+</button>
+
+</div>
+
+<div class="form-card hidden" id="step4">
+
+    <h2>✅ Review Request</h2>
+
+    <div class="review-box">
+
+        <p><strong>Pickup:</strong> <span id="reviewPickup"></span></p>
+
+        <p><strong>Delivery:</strong> <span id="reviewDelivery"></span></p>
+
+        <p><strong>Contact:</strong> <span id="reviewContact"></span></p>
+
+        <p><strong>Phone:</strong> <span id="reviewPhone"></span></p>
+
+        <p><strong>Date:</strong> <span id="reviewDate"></span></p>
+
+        <p><strong>Time:</strong> <span id="reviewTime"></span></p>
+
+    </div>
+
+<button class="primary-button" onclick="submitRequest()">
+    Confirm Pickup Request
+</button>
+</div>
+
+<div class="form-card hidden" id="complete">
+
+
+<h2>✅ Request Submitted</h2>
+
+
+<p>
+Thank you! Your pickup request has been received.
+A DasherLab dispatcher will review the details and follow up.
+</p>
+
+
+<button class="primary-button" onclick="location.href='index.html'">
+Return Home
+</button>
+
+
+</div>
+
+        <button class="back-button" onclick="location.href='index.html'">
+
+            ← Back to Dashboard
+
+        </button>
+
+
+    </main>
+
+
+</div>
+
+
+<script src="script.js"></script>
+
+
+</body>
+
+</html>
