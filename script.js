@@ -54,11 +54,12 @@ setTimeout(()=>{
 
 
 
-    if(lowerText.includes("appointment")){
+if (
+    lowerText.includes("appointment") ||
     lowerText.includes("schedule") ||
     lowerText.includes("book") ||
     lowerText.includes("meeting")
-
+){
         response = `
         I'd be happy to help schedule an appointment.
 
@@ -82,45 +83,135 @@ setTimeout(()=>{
         <br><br>
 
         <button onclick="location.href='quote.html'">
-        💰 Request Quote
+        💰 Get Your Instant Estimate
         </button>
         `;
 
     }
 
 
-    else if(
-    lowerText.includes("dispatch") ||
-    lowerText.includes("contact") ||
-    lowerText.includes("person") ||
-    lowerText.includes("call") ||
-    lowerText.includes("speak") ||
-    lowerText.includes("someone") ||
-    lowerText.includes("representative")
-    ){
+else if(
+lowerText.includes("contact") ||
+lowerText.includes("person") ||
+lowerText.includes("human") ||
+lowerText.includes("representative") ||
+lowerText.includes("someone")
+){
 
-        response = `
-        I'll help connect you with dispatch.
+response = `
 
-        <br><br>
+I'd be happy to connect you with a member of our team.
 
-        <button onclick="location.href='contact.html'">
-        📞 Contact Dispatch
-        </button>
-        `;
+<br><br>
 
-    }
+I'll collect your information and make sure
+the right person follows up.
+
+<br><br>
+
+<button onclick="location.href='contact.html'">
+
+📞 Contact Team
+
+</button>
+
+`;
+
+}
+
+else if(
+lowerText.includes("service") ||
+lowerText.includes("offer") ||
+lowerText.includes("do you do")
+){
+
+response = `
+
+We help businesses with:
+
+<br><br>
+
+✔ AI customer support
+<br>
+✔ Automated scheduling
+<br>
+✔ Quote generation
+<br>
+✔ Lead capture
+<br>
+✔ Workflow automation
+
+<br><br>
+
+Would you like to see how Avery can help your business?
+
+`;
+
+}
 
 
-    else {
 
-        response = `
-        I'm here to help with pickups,
-        quotes, and delivery questions.
-        `;
+else if(
+lowerText.includes("price") ||
+lowerText.includes("pricing") ||
+lowerText.includes("cost")
+){
 
-    }
+response = `
 
+${businessKnowledge.pricing}
+
+<br><br>
+
+I can help you generate a custom estimate.
+
+<br><br>
+
+<button onclick="location.href='quote.html'">
+
+💰 Get a Quote
+
+</button>
+
+`;
+
+}
+
+
+
+else if(
+lowerText.includes("hours") ||
+lowerText.includes("open")
+){
+
+response = `
+
+Our business hours are:
+
+<br><br>
+
+${businessKnowledge.hours}
+
+`;
+
+}
+
+
+
+else {
+
+response = `
+
+${businessKnowledge.description}
+
+<br><br>
+
+I can help answer questions, create quotes,
+or connect you with a team member.
+
+`;
+
+}
 
     // Remove typing indicator
 
@@ -150,123 +241,170 @@ setTimeout(()=>{
 
 },1200);
 }
-function nextStep(step){
 
-["step1","step2","step3","step4"].forEach(id => {
+document.getElementById("userInput").addEventListener("keydown", function(event){
 
-    const section = document.getElementById(id);
+    if(event.key === "Enter"){
 
-    if(section){
+        event.preventDefault();
 
-        section.classList.add("hidden");
+        sendMessage();
 
     }
 
 });
+
+function nextStep(step){
+
+    // Hide all steps
+    document.querySelectorAll(".form-card").forEach(card=>{
+        card.classList.add("hidden");
+    });
+
+    // Show current step
     document.getElementById("step" + step).classList.remove("hidden");
 
-document.getElementById("progressText").innerText =
-"Step " + step + " of 4";
-document.querySelector(".progress-fill").style.width =
-(step * 25) + "%";
 
-    let prompt = document.getElementById("averyPrompt");
 
-if(step === 2){
+    // Update progress text
+    document.getElementById("progressText").innerText =
+    `Step ${step} of 4`;
 
-    prompt.innerText =
-    "Great! Now let's enter the delivery information so we know exactly where your package is going.";
 
-}
-    if(step === 3){
 
-        prompt.innerText =
-        "Almost done! Just a few more details before we review your request.";
+    // Update progress bar
+    let percent = 25;
 
-    }
+    if(step === 1) percent = 25;
+    if(step === 2) percent = 50;
+    if(step === 3) percent = 75;
+    if(step === 4) percent = 100;
 
+    document.getElementById("progressFill").style.width =
+    percent + "%";
+
+
+
+    // Populate Review Screen
     if(step === 4){
 
-        prompt.innerText =
-        "Please review your request before submitting.";
-
-        document.getElementById("reviewPickup").innerText =
-        document.getElementById("pickupAddress").value;
-
-        document.getElementById("reviewDelivery").innerText =
-        document.getElementById("deliveryAddress").value;
+        document.getElementById("reviewCompany").innerText =
+        document.getElementById("company").value;
 
         document.getElementById("reviewContact").innerText =
         document.getElementById("contact").value;
 
+        document.getElementById("reviewEmail").innerText =
+        document.getElementById("email").value;
+
         document.getElementById("reviewPhone").innerText =
         document.getElementById("phone").value;
+
+        document.getElementById("reviewRequestType").innerText =
+        document.getElementById("requestType").value;
+
+        document.getElementById("reviewService").innerText =
+        document.getElementById("service").value;
+
+        document.getElementById("reviewDescription").innerText =
+        document.getElementById("description").value;
 
         document.getElementById("reviewDate").innerText =
         document.getElementById("date").value;
 
-        document.getElementById("reviewTime").innerText =
-        document.getElementById("time").value;
+        document.getElementById("reviewPriority").innerText =
+        document.getElementById("priority").value;
+
+        document.getElementById("reviewNotes").innerText =
+        document.getElementById("notes").value;
 
     }
 
 }
 
-
-
 function submitRequest(){
 
-    document.getElementById("step1").classList.add("hidden");
-document.getElementById("step2").classList.add("hidden");
-document.getElementById("step3").classList.add("hidden");
-document.getElementById("step4").classList.add("hidden");
-    document.getElementById("step3").classList.add("hidden");
+
 const request = {
 
-    company: document.getElementById("company").value,
 
-    contact: document.getElementById("contact").value,
+company:
+document.getElementById("company").value,
 
-    phone: document.getElementById("phone").value,
 
-    pickup: document.getElementById("pickupAddress").value,
+contact:
+document.getElementById("contact").value,
 
-    delivery: document.getElementById("deliveryAddress").value,
 
-    date: document.getElementById("date").value,
+email:
+document.getElementById("email").value,
 
-    time: document.getElementById("time").value,
 
-    status: "Pending Review"
+phone:
+document.getElementById("phone").value,
+
+
+requestType:
+document.getElementById("requestType").value,
+
+
+service:
+document.getElementById("service").value,
+
+
+description:
+document.getElementById("description").value,
+
+
+date:
+document.getElementById("date").value,
+
+
+priority:
+document.getElementById("priority").value,
+
+
+notes:
+document.getElementById("notes").value,
+
+
+status:
+"Pending",
+
+
+createdBy:
+"Avery AI"
 
 };
 
 
+
+
+
 let requests =
-JSON.parse(localStorage.getItem("pickupRequests")) || [];
+JSON.parse(localStorage.getItem("requests")) || [];
 
-
-request.id = "DL-" + (1001 + requests.length);
 
 
 requests.push(request);
 
 
+
 localStorage.setItem(
-    "pickupRequests",
-    JSON.stringify(requests)
-);    document.getElementById("complete").classList.remove("hidden");
+"requests",
+JSON.stringify(requests)
+);
 
 
-document.getElementById("progressText").innerText =
-"Complete";
 
-    document.querySelector(".progress-fill").style.width = "100%";
 
-    document.getElementById("averyPrompt").innerText =
-"Perfect! I've received your pickup request. A DasherLab dispatcher will review it shortly.";
-}
-function toggleMenu(){
+alert("Your request has been submitted!");
+
+
+
+window.location.href="index.html";
+
+}function toggleMenu(){
 
     document.getElementById("sideMenu")
     .classList.toggle("active");
@@ -274,101 +412,177 @@ function toggleMenu(){
 
 function loadDashboard(){
 
-    const requests =
-    JSON.parse(localStorage.getItem("pickupRequests")) || [];
 
-    updateOverview(requests);
+let requests = JSON.parse(localStorage.getItem("requests")) || [];
 
-    const container =
-    document.getElementById("requestList");
 
-    if(!container) return;
 
-    if(requests.length === 0){
+const requestList = document.getElementById("requestList");
 
-        container.innerHTML =
-        "<p>No new requests yet.</p>";
 
-        return;
 
-    }
+if(requests.length === 0){
 
-    container.innerHTML = "";
+    requestList.innerHTML = `
+    <p>No new requests yet.</p>
+    `;
 
-    requests.forEach(request => {
+    return;
 
-        container.innerHTML += `
+}
 
-        <div class="request-card">
 
-            <h3>${request.id}</h3>
 
-            <p>
-                <strong>Company:</strong>
-                ${request.company}
-            </p>
+requestList.innerHTML = "";
 
-            <p>
-                <strong>Contact:</strong>
-                ${request.contact}
-            </p>
 
-            <p>
-                <strong>Pickup:</strong>
-                ${request.pickup}
-            </p>
 
-            <p>
-                <strong>Delivery:</strong>
-                ${request.delivery}
-            </p>
+requests.forEach((request, index)=>{
+
+
+requestList.innerHTML += `
+
+<div class="request-card">
+
+
+<h3>
+
+${
+request.type === "Quote Request"
+
+?
+
+"💰 Quote Request"
+
+
+:
+
+request.type === "Human Follow-Up"
+
+?
+
+"👤 Human Follow-Up"
+
+
+:
+
+"📋 " + (request.requestType || "Service Request")
+
+}
+
+</h3>
+<p>
+<strong>Business:</strong>
+${request.company || "Individual Customer"}
+</p>
+
 
 <p>
-
-<strong>Status:</strong>
-
-<span class="${
-request.status === "Accepted"
-? "status-accepted"
-: "status-pending"
-}">
-
-${request.status}
-
-</span>
-
+<strong>Contact:</strong>
+${request.contact}
 </p>
-${request.driver 
+
+
+<p>
+<strong>Service:</strong>
+${request.service || "Not specified"}
+</p>
+
+${
+request.type === "Sales Opportunity"
+
 ?
-`<p>
-<strong>Driver:</strong>
-${request.driver}
-</p>`
+
+`
+<p>
+<strong>Budget:</strong>
+${request.budget}
+</p>
+
+<p>
+<strong>Description:</strong>
+${request.description}
+</p>
+`
+
 :
+
 ""
+
 }
-            ${
-                request.status === "Pending Review"
 
-                ? `<button class="primary-button"
-                    onclick="acceptRequest('${request.id}')">
-                    Accept Request
-                   </button>`
+${
+request.type === "Human Follow-Up"
 
-: `<button class="secondary-button" onclick="assignDriver('${request.id}')">
+?
 
-Assign Driver
+`
+<p>
+<strong>Email:</strong>
+${request.email}
+</p>
 
-</button>`            }
 
-        </div>
+<p>
+<strong>Message:</strong>
+${request.message}
+</p>
 
-        `;
 
-    });
+<p>
+<strong>Status:</strong>
+Needs Team Review
+</p>
+`
 
-}   // <-- loadDashboard ends HERE
+:
 
+""
+
+}
+
+<p>
+<strong>Priority:</strong>
+${request.priority}
+</p>
+
+
+<p>
+<strong>Status:</strong>
+${request.status}
+</p>
+
+
+<p>
+<strong>Created By:</strong>
+${request.createdBy}
+</p>
+
+
+
+</div>
+
+`;
+
+});
+
+// Update dashboard counters
+
+document.getElementById("pendingCount").innerText =
+requests.filter(request => request.status === "Pending").length;
+
+
+document.getElementById("acceptedCount").innerText =
+requests.filter(request => request.status === "Accepted").length;
+
+
+document.getElementById("assignedCount").innerText =
+requests.filter(request => request.status === "In Progress").length;
+
+
+document.getElementById("completedCount").innerText =
+requests.filter(request => request.status === "Completed").length;
+}
 function updateOverview(requests){
 
 

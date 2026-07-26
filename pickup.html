@@ -50,27 +50,27 @@
 
 
     <a href="index.html">
-        🏠 Home
+        Home
     </a>
 
 
     <a href="dashboard.html">
-        📊 Owner's Dashboard
+        Owner's Dashboard
     </a>
 
 
     <a href="pickup.html">
-        📦 Request Pickup
+        Request Appointment
     </a>
 
 
     <a href="quote.html">
-        💰 Request Quote
+        Request Quote
     </a>
 
 
     <a href="contact.html">
-        📞 Contact Dispatch
+        Contact Customer Service
     </a>
 
 
@@ -176,20 +176,21 @@
 
 <main class="pickup-container">
 
+<!-- STEP 1 -->
+
 <div class="form-card" id="step1">
 
-
-<h2>Basic Information</h2>
+<h2>Contact Information</h2>
 
 
 <label>
-Company Name
+Business Name
 </label>
 
 <input 
 type="text" 
 id="company" 
-placeholder="Company (optional)">
+placeholder="Business name (optional)">
 
 
 
@@ -205,13 +206,13 @@ placeholder="Your name">
 
 
 <label>
-Home Address
+Email Address
 </label>
 
-<input 
-type="text" 
-id="pickupAddress" 
-placeholder="Street address">
+<input
+type="email"
+id="email"
+placeholder="Email address">
 
 
 
@@ -233,158 +234,250 @@ Next →
 
 </div>
 
+
+
+
+
+<!-- STEP 2 -->
+
 <div class="form-card hidden" id="step2">
 
-    <h2>Delivery Information</h2>
 
-    <label>
-        Delivery Address
-    </label>
-
-    <input
-    type="text"
-    id="deliveryAddress"
-    placeholder="Street address">
+<h2>How Can We Help?</h2>
 
 
-    <label>
-        Recipient Name
-    </label>
 
-    <input
-    type="text"
-    id="recipient"
-    placeholder="Recipient name">
+<label>
+Request Type
+</label>
 
+<select id="requestType">
 
-    <label>
-        Recipient Phone
-    </label>
+<option>General Inquiry</option>
+<option>Schedule an Appointment</option>
+<option>Request a Quote</option>
+<option>Customer Support</option>
+<option>Service Request</option>
 
-    <input
-    type="tel"
-    id="deliveryPhone"
-    placeholder="Recipient phone">
+</select>
 
 
-    <button class="secondary-button" onclick="nextStep(1)">
-        ← Back
-    </button>
 
 
-    <button class="primary-button" onclick="nextStep(3)">
-        Continue →
-    </button>
+
+<label>
+Service Needed
+</label>
+
+<input
+type="text"
+id="service"
+placeholder="What service do you need help with?">
+
+
+
+
+
+<label>
+Describe Your Request
+</label>
+
+<textarea
+id="description"
+placeholder="Tell us how Avery can help">
+</textarea>
+
+
+
+
+<button class="secondary-button" onclick="nextStep(1)">
+← Back
+</button>
+
+
+<button class="primary-button" onclick="nextStep(3)">
+Continue →
+</button>
+
 
 </div>
+
+
+
+
+
+
+
+<!-- STEP 3 -->
 
 <div class="form-card hidden" id="step3">
 
-    <h2>Request Details</h2>
 
-
-    <label>
-        Pickup Date
-    </label>
-
-    <input 
-    type="date" 
-    id="date">
+<h2>Request Preferences</h2>
 
 
 
-    <label>
-        Preferred Pickup Time
-    </label>
 
-    <input 
-    type="time" 
-    id="time">
+<label>
+Preferred Date
+</label>
 
-
-
-    <label>
-        Additional Notes
-    </label>
-
-    <textarea 
-    id="notes" 
-    placeholder="Special instructions">
-    </textarea>
+<input 
+type="date" 
+id="date">
 
 
 
-    <button class="secondary-button" onclick="nextStep(2)">
-        ← Back
-    </button>
 
 
-    <button class="primary-button" onclick="nextStep(4)">
-        Review Request →
-    </button>
+<label>
+Priority Level
+</label>
+
+<select id="priority">
+
+<option>Normal</option>
+<option>Urgent</option>
+<option>Low Priority</option>
+
+</select>
+
+
+
+
+
+<label>
+Additional Notes
+</label>
+
+<textarea 
+id="notes" 
+placeholder="Anything else Avery should know?">
+</textarea>
+
+
+
+
+
+<button class="secondary-button" onclick="nextStep(2)">
+← Back
+</button>
+
+
+<button class="primary-button" onclick="nextStep(4)">
+Review Request →
+</button>
 
 
 </div>
+
+
+
+
+
+
+
+<!-- STEP 4 -->
 
 <div class="form-card hidden" id="step4">
 
-    <h2>Review Request</h2>
 
-
-    <div class="review-box">
-
-        <p>
-            <strong>Pickup:</strong>
-            <span id="reviewPickup"></span>
-        </p>
-
-
-        <p>
-            <strong>Delivery:</strong>
-            <span id="reviewDelivery"></span>
-        </p>
-
-
-        <p>
-            <strong>Contact:</strong>
-            <span id="reviewContact"></span>
-        </p>
-
-
-        <p>
-            <strong>Phone:</strong>
-            <span id="reviewPhone"></span>
-        </p>
-
-
-        <p>
-            <strong>Date:</strong>
-            <span id="reviewDate"></span>
-        </p>
-
-
-        <p>
-            <strong>Time:</strong>
-            <span id="reviewTime"></span>
-        </p>
-
-
-    </div>
+<h2>Review Request</h2>
 
 
 
-    <button class="secondary-button" onclick="nextStep(3)">
-        ← Back
-    </button>
+<div class="review-box">
 
 
-    <button class="primary-button" onclick="submitRequest()">
-        Confirm Pickup Request
-    </button>
+<p>
+<strong>Business:</strong>
+<span id="reviewCompany"></span>
+</p>
+
+
+
+<p>
+<strong>Contact:</strong>
+<span id="reviewContact"></span>
+</p>
+
+
+
+<p>
+<strong>Email:</strong>
+<span id="reviewEmail"></span>
+</p>
+
+
+
+<p>
+<strong>Phone:</strong>
+<span id="reviewPhone"></span>
+</p>
+
+
+
+<p>
+<strong>Request Type:</strong>
+<span id="reviewRequestType"></span>
+</p>
+
+
+
+<p>
+<strong>Service:</strong>
+<span id="reviewService"></span>
+</p>
+
+
+
+<p>
+<strong>Description:</strong>
+<span id="reviewDescription"></span>
+</p>
+
+
+
+<p>
+<strong>Date:</strong>
+<span id="reviewDate"></span>
+</p>
+
+
+
+<p>
+<strong>Priority:</strong>
+<span id="reviewPriority"></span>
+</p>
+
+
+
+<p>
+<strong>Notes:</strong>
+<span id="reviewNotes"></span>
+</p>
+
 
 
 </div>
 
+
+
+
+
+<button class="secondary-button" onclick="nextStep(3)">
+← Back
+</button>
+
+
+
+<button class="primary-button" onclick="submitRequest()">
+Submit Request
+</button>
+
+
+
+</div>
 <div class="form-card hidden" id="complete">
 
 

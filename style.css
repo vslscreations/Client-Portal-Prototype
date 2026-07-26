@@ -1040,3 +1040,37 @@ margin-bottom:20px;
 overflow:hidden;
 
 }
+
+/* AI ACTIVITY FEED */
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 10px;
+}
+
+
+.activity-item span {
+    font-size: 1.5rem;
+}
+
+
+.activity-item p {
+    margin: 0;
+    flex: 1;
+}
+
+
+.activity-item small {
+    opacity: .6;
+}

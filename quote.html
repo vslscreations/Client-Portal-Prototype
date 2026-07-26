@@ -1,27 +1,504 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Request Pickup</title>
-    <link rel="stylesheet" href="style.css">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Request a Quote | EskoDSK AI</title>
+
+<link rel="stylesheet" href="style.css">
+
 </head>
+
 
 <body>
 
+
 <div class="app">
 
-    <h1>💰 Request Quote</h1>
 
-    <p>This page is under construction.</p>
+<!-- TOP NAV -->
 
-    <br>
+<header class="top-nav">
 
-    <button onclick="location.href='index.html'">
-        ← Back to Dashboard
-    </button>
+<img src="images/logo.png" class="logo">
+
+
+<div class="menu-button" onclick="toggleMenu()">
+☰
+</div>
+
+</header>
+
+
+
+
+
+<!-- SIDE MENU -->
+
+<div class="side-menu" id="sideMenu">
+
+
+<button class="close-menu" onclick="toggleMenu()">
+✕
+</button>
+
+
+<a href="index.html">
+Home
+</a>
+
+
+<a href="pickup.html">
+Request Service
+</a>
+
+
+<a href="quote.html">
+Get Quote
+</a>
+
+
+<a href="dashboard.html">
+Dashboard
+</a>
+
 
 </div>
 
+
+
+
+
+
+<!-- HEADER -->
+
+<div class="page-header">
+
+<h1>
+Get Your Quote
+</h1>
+
+<p>
+Let Avery gather your information and prepare an estimate.
+</p>
+
+</div>
+
+
+
+
+
+
+
+<!-- PROGRESS -->
+
+<div class="progress-container">
+
+<p id="quoteProgressText">
+Step 1 of 4
+</p>
+
+
+<div class="progress-bar">
+
+<div class="progress-fill" id="quoteProgressFill">
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+<!-- STEP 1 -->
+
+<div class="form-card" id="quoteStep1">
+
+
+<h2>
+Contact Information
+</h2>
+
+
+
+<label>
+Business Name
+</label>
+
+<input 
+type="text"
+id="quoteCompany"
+placeholder="Business name">
+
+
+
+<label>
+Contact Name
+</label>
+
+<input
+type="text"
+id="quoteContact"
+placeholder="Your name">
+
+
+
+<label>
+Email Address
+</label>
+
+<input
+type="email"
+id="quoteEmail"
+placeholder="Email address">
+
+
+
+<label>
+Phone Number
+</label>
+
+<input
+type="tel"
+id="quotePhone"
+placeholder="Phone number">
+
+
+
+
+
+<button class="primary-button" onclick="nextQuoteStep(2)">
+Next →
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- STEP 2 -->
+
+<div class="form-card hidden" id="quoteStep2">
+
+
+<h2>
+Project Information
+</h2>
+
+
+
+<label>
+Service Needed
+</label>
+
+
+<select id="quoteService">
+
+<option>
+AI Automation
+</option>
+
+<option>
+Website Development
+</option>
+
+<option>
+Customer Support
+</option>
+
+<option>
+Marketing
+</option>
+
+<option>
+Custom Project
+</option>
+
+
+</select>
+
+
+
+
+
+<label>
+Estimated Budget
+</label>
+
+
+<select id="quoteBudget">
+
+<option>
+Under $500
+</option>
+
+<option>
+$500 - $2,000
+</option>
+
+<option>
+$2,000 - $5,000
+</option>
+
+<option>
+$5,000+
+</option>
+
+
+</select>
+
+
+
+
+
+
+<label>
+Describe Your Project
+</label>
+
+
+<textarea
+id="quoteDescription"
+placeholder="Tell Avery about your project">
+</textarea>
+
+
+
+
+
+<button class="secondary-button" onclick="nextQuoteStep(1)">
+← Back
+</button>
+
+
+<button class="primary-button" onclick="nextQuoteStep(3)">
+Continue →
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+<!-- STEP 3 -->
+
+<div class="form-card hidden" id="quoteStep3">
+
+
+<h2>
+Timeline & Details
+</h2>
+
+
+
+<label>
+Preferred Start Date
+</label>
+
+
+<input
+type="date"
+id="quoteDate">
+
+
+
+
+
+<label>
+Priority Level
+</label>
+
+
+<select id="quotePriority">
+
+
+<option>
+Standard
+</option>
+
+
+<option>
+High Priority
+</option>
+
+
+<option>
+ASAP
+</option>
+
+
+</select>
+
+
+
+
+
+<label>
+Additional Notes
+</label>
+
+
+<textarea
+id="quoteNotes"
+placeholder="Anything else Avery should know?">
+</textarea>
+
+
+
+
+
+
+<button class="secondary-button" onclick="nextQuoteStep(2)">
+← Back
+</button>
+
+
+<button class="primary-button" onclick="generateQuote()">
+Generate Quote →
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- STEP 4 -->
+
+<div class="form-card hidden" id="quoteStep4">
+
+
+<h2>
+Avery's Estimate
+</h2>
+
+
+
+<div class="review-box">
+
+
+<h3>
+Estimated Investment
+</h3>
+
+
+<h1 id="generatedQuote">
+$0
+</h1>
+
+
+
+<p>
+<strong>
+Recommended Service:
+</strong>
+
+<span id="quoteResultService"></span>
+
+</p>
+
+
+
+
+<p>
+<strong>
+Timeline:
+</strong>
+
+<span id="quoteTimeline"></span>
+
+</p>
+
+
+
+
+<p>
+<strong>
+Priority:
+</strong>
+
+<span id="quoteResultPriority"></span>
+
+</p>
+
+
+
+
+<hr>
+
+
+<p>
+
+This estimate was created by Avery AI.
+
+A final proposal can be reviewed by your team before approval.
+
+</p>
+
+
+</div>
+
+
+
+
+
+<button class="primary-button" onclick="submitQuote()">
+
+Accept Estimate
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+<script src="quote.js"></script>
+
+<script>
+console.log("Quote JS loaded");
+</script>
+
+<script src="script.js"></script>
+
 </body>
+
 </html>

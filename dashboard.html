@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Owner Dashboard | DasherLab</title>
+<title>Business Dashboard | EskoDSK AI</title>
 
 <link rel="stylesheet" href="style.css">
 
@@ -54,12 +54,12 @@ Home
 
 
 <a href="dashboard.html">
-Owner's Dashboard
+Business Dashboard
 </a>
 
 
-<a href="pickup.html">
-Request Pickup
+<a href="request.html">
+Create Request
 </a>
 
 
@@ -73,10 +73,15 @@ Request Pickup
 <div class="page-header">
 
 <h1>
-Owner's Dashboard
+Business Dashboard
 </h1>
 
+<p>
+Manage your customers, requests, and daily operations with AI assistance.
+</p>
+
 </div>
+
 
 
 
@@ -101,7 +106,7 @@ Avery
 <br>
 
 <span>
-Virtual Dispatch Coordinator
+AI Business Assistant
 </span>
 
 
@@ -122,8 +127,7 @@ Powered by EskoDSK AI
 <div class="avery-bubble">
 
 <p>
-
-<p>Welcome back, manage your delivery operations from one place.</p>
+Welcome back! I'm here to help manage customer requests, organize tasks, answer questions, and streamline your daily operations.
 </p>
 
 
@@ -135,14 +139,21 @@ Powered by EskoDSK AI
 
 
 
+
+
 <main class="dashboard-container">
+
+
+
+<!-- BUSINESS OVERVIEW -->
 
 <div class="dispatch-overview">
 
 
 <h2>
-Dispatch Overview
+Business Overview
 </h2>
+
 
 
 <div class="overview-grid">
@@ -155,10 +166,12 @@ Dispatch Overview
 </h3>
 
 <p>
-📥 Pending Requests
+📥 New Requests
 </p>
 
 </div>
+
+
 
 
 
@@ -169,10 +182,12 @@ Dispatch Overview
 </h3>
 
 <p>
-✅ Accepted
+✅ In Progress
 </p>
 
 </div>
+
+
 
 
 
@@ -183,10 +198,12 @@ Dispatch Overview
 </h3>
 
 <p>
-🚚 Active Deliveries
+⚙️ Active Tasks
 </p>
 
 </div>
+
+
 
 
 
@@ -203,15 +220,25 @@ Dispatch Overview
 </div>
 
 
+
 </div>
 
 
 </div>
+
+
+
+
+
+
+
+<!-- CUSTOMER REQUESTS -->
+
 
 <div class="dashboard-card">
 
 <h2>
-📦 New Requests
+📋 Customer Requests
 </h2>
 
 
@@ -228,14 +255,112 @@ No new requests yet.
 </div>
 
 
+
+
+
+<!-- AI ACTIVITY FEED -->
+
 <div class="dashboard-card">
 
 <h2>
-🚚 Today's Deliveries
+🤖 Avery's Recent Activity
 </h2>
 
+
+<div class="activity-list">
+
+
+<div class="activity-item">
+
+<span>
+✅
+</span>
+
 <p>
-No deliveries scheduled.
+Avery answered a customer question about available services.
+</p>
+
+<small>
+Just now
+</small>
+
+</div>
+
+
+
+
+<div class="activity-item">
+
+<span>
+📋
+</span>
+
+<p>
+Avery created a new customer request and organized the information.
+</p>
+
+<small>
+2 minutes ago
+</small>
+
+</div>
+
+
+
+
+<div class="activity-item">
+
+<span>
+📩
+</span>
+
+<p>
+Avery sent a confirmation message to a customer.
+</p>
+
+<small>
+5 minutes ago
+</small>
+
+</div>
+
+
+
+
+<div class="activity-item">
+
+<span>
+⚙️
+</span>
+
+<p>
+Avery updated today's workflow and prepared the next task.
+</p>
+
+<small>
+10 minutes ago
+</small>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<!-- TODAY'S ACTIVITY -->
+
+
+<div class="dashboard-card">
+
+<h2>
+📅 Today's Activity
+</h2>
+
+
+<p>
+No scheduled activity yet.
 </p>
 
 
@@ -244,11 +369,19 @@ No deliveries scheduled.
 
 
 
+
+
+
+
+<!-- CUSTOMER COMMUNICATION -->
+
+
 <div class="dashboard-card">
 
 <h2>
-💬 Messages
+💬 Customer Messages
 </h2>
+
 
 <p>
 No new messages.
@@ -260,6 +393,29 @@ No new messages.
 
 
 
+
+
+<!-- AI INSIGHTS -->
+
+<div class="dashboard-card">
+
+<h2>
+🤖 AI Business Insights
+</h2>
+
+
+<p>
+Avery will analyze requests, identify trends, and help improve your daily workflow.
+</p>
+
+
+</div>
+
+
+
+
+
+
 </main>
 
 
@@ -267,13 +423,17 @@ No new messages.
 
 
 
+
+
 <script src="script.js"></script>
+
 
 <script>
 
 loadDashboard();
 
 </script>
+
 
 </body>
 
