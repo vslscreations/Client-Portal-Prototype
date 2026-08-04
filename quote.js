@@ -1,4 +1,33 @@
+function validateQuoteStep(step){
+
+    const fieldsByStep = {
+        1: ["#quoteCompany", "#quoteContact", "#quoteEmail", "#quotePhone"],
+        2: ["#quoteService", "#quoteBudget", "#quoteDescription"],
+        3: ["#quoteDate", "#quotePriority"]
+    };
+
+    const fields = fieldsByStep[step] || [];
+
+    for(const selector of fields){
+        const field = document.querySelector(selector);
+
+        if(!field) continue;
+
+        if(field.value.trim() === "" || !field.checkValidity()){
+            field.reportValidity();
+            return false;
+        }
+    }
+
+    return true;
+
+}
+
 function nextQuoteStep(step){
+
+if(step > 1 && !validateQuoteStep(step - 1)){
+    return;
+}
 
 
 document.querySelectorAll(".form-card").forEach(card=>{
@@ -121,6 +150,24 @@ generateFinalQuote();
 
 function submitQuote(){
 
+const requiredFields = [
+    document.getElementById("quoteCompany"),
+    document.getElementById("quoteContact"),
+    document.getElementById("quoteEmail"),
+    document.getElementById("quotePhone"),
+    document.getElementById("quoteService"),
+    document.getElementById("quoteBudget"),
+    document.getElementById("quoteDescription"),
+    document.getElementById("quoteDate"),
+    document.getElementById("quotePriority")
+];
+
+for(const field of requiredFields){
+    if(!field.value.trim() || !field.checkValidity()){
+        field.reportValidity();
+        return;
+    }
+}
 
 let quoteRequest = {
 

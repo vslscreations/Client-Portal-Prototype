@@ -136,7 +136,8 @@ Business Name
 <input 
 type="text"
 id="quoteCompany"
-placeholder="Business name">
+placeholder="Business name"
+required>
 
 
 
@@ -147,7 +148,8 @@ Contact Name
 <input
 type="text"
 id="quoteContact"
-placeholder="Your name">
+placeholder="Your name"
+required>
 
 
 
@@ -158,7 +160,8 @@ Email Address
 <input
 type="email"
 id="quoteEmail"
-placeholder="Email address">
+placeholder="Email address"
+required>
 
 
 
@@ -169,7 +172,8 @@ Phone Number
 <input
 type="tel"
 id="quotePhone"
-placeholder="Phone number">
+placeholder="Phone number"
+required>
 
 
 
@@ -205,7 +209,9 @@ Service Needed
 </label>
 
 
-<select id="quoteService">
+<select id="quoteService" required>
+
+<option value="">Select a service</option>
 
 <option>
 AI Automation
@@ -239,7 +245,9 @@ Estimated Budget
 </label>
 
 
-<select id="quoteBudget">
+<select id="quoteBudget" required>
+
+<option value="">Select a budget range</option>
 
 <option>
 Under $500
@@ -272,7 +280,8 @@ Describe Your Project
 
 <textarea
 id="quoteDescription"
-placeholder="Tell Avery about your project">
+placeholder="Tell Avery about your project"
+required>
 </textarea>
 
 
@@ -319,7 +328,8 @@ Preferred Start Date
 
 <input
 type="date"
-id="quoteDate">
+id="quoteDate"
+required>
 
 
 
@@ -330,7 +340,9 @@ Priority Level
 </label>
 
 
-<select id="quotePriority">
+<select id="quotePriority" required>
+
+<option value="">Select a priority level</option>
 
 
 <option>
@@ -496,7 +508,7 @@ Accept Estimate
 <script>
 console.log("Quote JS loaded");
 </script>
-
+<script src="avery/actions.js"></script>
 <script src="script.js"></script>
 
 </body>

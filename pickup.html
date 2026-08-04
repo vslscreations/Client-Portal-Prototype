@@ -190,7 +190,8 @@ Business Name
 <input 
 type="text" 
 id="company" 
-placeholder="Business name (optional)">
+placeholder="Business name"
+required>
 
 
 
@@ -201,7 +202,8 @@ Contact Name
 <input 
 type="text" 
 id="contact" 
-placeholder="Your name">
+placeholder="Your name"
+required>
 
 
 
@@ -212,7 +214,8 @@ Email Address
 <input
 type="email"
 id="email"
-placeholder="Email address">
+placeholder="Email address"
+required>
 
 
 
@@ -223,7 +226,8 @@ Phone Number
 <input 
 type="tel" 
 id="phone" 
-placeholder="Phone number">
+placeholder="Phone number"
+required>
 
 
 
@@ -251,7 +255,9 @@ Next →
 Request Type
 </label>
 
-<select id="requestType">
+<select id="requestType" required>
+
+<option value="">Select a request type</option>
 
 <option>General Inquiry</option>
 <option>Schedule an Appointment</option>
@@ -272,7 +278,8 @@ Service Needed
 <input
 type="text"
 id="service"
-placeholder="What service do you need help with?">
+placeholder="What service do you need help with?"
+required>
 
 
 
@@ -284,7 +291,8 @@ Describe Your Request
 
 <textarea
 id="description"
-placeholder="Tell us how Avery can help">
+placeholder="Tell us how Avery can help"
+required>
 </textarea>
 
 
@@ -324,7 +332,8 @@ Preferred Date
 
 <input 
 type="date" 
-id="date">
+id="date"
+required>
 
 
 
@@ -334,8 +343,9 @@ id="date">
 Priority Level
 </label>
 
-<select id="priority">
+<select id="priority" required>
 
+<option value="">Select a priority level</option>
 <option>Normal</option>
 <option>Urgent</option>
 <option>Low Priority</option>
@@ -513,7 +523,7 @@ Submit Request
 
 </div>
 <script src="script.js"></script>
-
+<script src="avery/actions.js"></script>
 </body>
 
 </html>

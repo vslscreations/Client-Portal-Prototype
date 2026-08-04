@@ -242,19 +242,82 @@ or connect you with a team member.
 },1200);
 }
 
-document.getElementById("userInput").addEventListener("keydown", function(event){
+const userInput = document.getElementById("userInput");
 
-    if(event.key === "Enter"){
+if (userInput) {
 
-        event.preventDefault();
+    userInput.addEventListener("keydown", function(event){
 
-        sendMessage();
+        if(event.key === "Enter"){
+
+            event.preventDefault();
+
+            sendMessage();
+
+        }
+
+    });
+
+}
+function getCurrentStepNumber(){
+
+    const activeCard = document.querySelector(".form-card:not(.hidden)");
+
+    if(!activeCard) return 1;
+
+    const match = activeCard.id.match(/step(\d+)/);
+
+    return match ? parseInt(match[1], 10) : 1;
+
+}
+
+function validateCurrentStep(){
+
+    const currentStep = getCurrentStepNumber();
+
+    const fieldsByStep = {
+
+        1: ["#contact", "#email", "#phone", "#company"],
+        2: ["#requestType", "#service", "#description"],
+        3: ["#date", "#priority"]
+
+    };
+
+    const fields = fieldsByStep[currentStep] || [];
+
+    for(const selector of fields){
+
+        const field = document.querySelector(selector);
+
+        if(!field) continue;
+
+        if(field.value.trim() === ""){
+
+            field.reportValidity();
+            return false;
+
+        }
+
+        if(!field.checkValidity()){
+
+            field.reportValidity();
+            return false;
+
+        }
 
     }
 
-});
+    return true;
+
+}
 
 function nextStep(step){
+
+    const currentStep = getCurrentStepNumber();
+
+    if(step > currentStep && !validateCurrentStep()){
+        return;
+    }
 
     // Hide all steps
     document.querySelectorAll(".form-card").forEach(card=>{
@@ -324,6 +387,28 @@ function nextStep(step){
 
 function submitRequest(){
 
+const requiredFields = [
+    document.getElementById("company"),
+    document.getElementById("contact"),
+    document.getElementById("email"),
+    document.getElementById("phone"),
+    document.getElementById("requestType"),
+    document.getElementById("service"),
+    document.getElementById("description"),
+    document.getElementById("date"),
+    document.getElementById("priority")
+];
+
+for(const field of requiredFields){
+
+    if(!field.value.trim() || !field.checkValidity()){
+
+        field.reportValidity();
+        return;
+
+    }
+
+}
 
 const request = {
 
