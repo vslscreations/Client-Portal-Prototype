@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tracking Status | DasherLab</title>
+    <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Tracking Status</h1>
+            <p>Check the latest pickup request status from this portal.</p>
+            <div id="trackingStatusContent">
+                <p>Loading tracking information...</p>
+            </div>
+            <div class="button-row">
+                <button class="primary-button" type="button" onclick="window.location.href = '../index.html'">🏠 Return Home</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../Avery/memory.js"></script>
+    <script src="../Avery/tracking.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const currentRequest = getLatestPickupRequest();
+            const container = document.getElementById("trackingStatusContent");
+
+            if (!container) {
+                return;
+            }
+
+            if (!currentRequest) {
+                container.innerHTML = "<p>No pickup request has been saved yet.</p>";
+                return;
+            }
+
+            container.innerHTML = `
+                <p><strong>Tracking Number:</strong><br>${currentRequest.trackingId || "Not available"}</p>
+                <p><strong>Status:</strong><br>${currentRequest.status || "Awaiting Dispatch"}</p>
+                <p><strong>Pickup Address:</strong><br>${currentRequest.delivery && currentRequest.delivery.pickupAddress ? currentRequest.delivery.pickupAddress : "Not provided"}</p>
+                <p><strong>Delivery Address:</strong><br>${currentRequest.delivery && currentRequest.delivery.deliveryAddress ? currentRequest.delivery.deliveryAddress : "Not provided"}</p>
+            `;
+        });
+    </script>
+</body>
+</html>

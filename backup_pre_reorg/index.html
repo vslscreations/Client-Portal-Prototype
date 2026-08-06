@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DasherLab Client Portal</title>
 
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="assets/icons/app-icon.png">
+    <link rel="icon" type="image/png" href="images/app-icon.png">
 </head>
 
 <body>
@@ -16,7 +16,7 @@
 
 <header class="top-nav">
 
-    <img src="assets/images/logo.PNG" class="logo">
+    <img src="images/logo.png" class="logo">
 
 
     <div class="menu-button" onclick="toggleMenu()">
@@ -58,7 +58,7 @@
 <section class="ai-welcome">
 
 <div class="ai-avatar">
-    <img src="assets/images/avery.png" alt="Avery - Virtual Administrative Assistant">
+    <img src="images/avery.png" alt="Avery - Virtual Administrative Assistant">
 </div>
 
     <h2>
@@ -123,7 +123,7 @@
         </h3>
 
 
-        <div class="action-card" onclick="goTo('pages/pickup.html')">
+        <div class="action-card" onclick="location.href='pickup.html'">
 
             📅
 
@@ -135,7 +135,7 @@
         </div>
 
 
-        <div class="action-card" onclick="goTo('pages/quote.html')">
+        <div class="action-card" onclick="location.href='quote.html'">
 
             💰
 
@@ -147,7 +147,7 @@
         </div>
 
         
-        <div class="action-card" onclick="goTo('pages/contact.html')">
+        <div class="action-card" onclick="location.href='contact.html'">
 
             📞
 
@@ -190,20 +190,8 @@
 </nav>
 </div>
 
-<script src="avery/knowledge.js"></script>
-<script src="avery/intents.js"></script>
+<script src="business-data.js"></script>
 <script src="avery/actions.js"></script>
-<script src="avery/engine.js"></script>
-<script src="avery/router.js"></script>
-<script src="avery/conversation.js"></script>
-<script src="avery/memory.js"></script>
-<script src="avery/taskModel.js"></script>
-<script src="avery/responses.js"></script>
-<script src="avery/workflows.js"></script>
-<script src="avery/workflowEngine.js"></script>
-
-<script src="js/navigation.js"></script>
-<script src="js/script.js"></script>
-
+<script src="script.js"></script>
 </body>
 </html>

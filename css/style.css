@@ -1,0 +1,1076 @@
+/* ===========================
+   DasherLab Client Portal
+   =========================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: url('../assets/images/background.jpg') center/cover fixed no-repeat;
+    background-color: #1a314f;
+    color: #1a1a1a;
+}
+
+.app {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 40px 60px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 35px;
+    color:white;
+}
+
+.header p{
+
+    color:#d9d9d9;
+
+}
+.logo {
+    max-height: 90px;
+    width: auto;
+    max-width: 440px;
+    margin-bottom: 0;
+    object-fit: contain;
+}
+
+.header h1 {
+    color: #0b2e59;
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.header p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.card {
+    background: white;
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 8px 20px rgba(0,0,0,.08);
+    cursor: pointer;
+    transition: .25s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+}
+
+.icon {
+    font-size: 2rem;
+}
+
+.card h2 {
+    margin: 12px 0;
+    color: #0b2e59;
+}
+
+.card p {
+    color: #666;
+}
+
+footer {
+    margin-top: 40px;
+    text-align: center;
+    color: #777;
+    font-size: .9rem;
+}
+/* Pickup Wizard */
+
+.pickup-container {
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+
+.progress{
+
+    background:white;
+
+    border-radius:20px;
+
+    margin:20px;
+
+    padding:20px;
+
+    text-align:center;
+
+}
+
+.progress-bar {
+    width:100%;
+    height:12px;
+    background:#ddd;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+
+.progress-fill {
+    width:25%;
+    height:100%;
+    background:#1e7333;
+    border-radius:20px;
+}
+
+
+.form-card {
+    background:white;
+    padding:25px;
+    border-radius:18px;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+
+.form-card h2 {
+    color:#0b2e59;
+    margin-bottom:20px;
+}
+
+
+.form-card label {
+
+    display:block;
+    margin-top:15px;
+    margin-bottom:6px;
+    font-weight:bold;
+
+}
+
+
+.form-card input {
+
+    width:100%;
+    padding:14px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    font-size:1rem;
+
+}
+
+
+.primary-button {
+
+    width:100%;
+    margin-top:25px;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    background:#0b2e59;
+    color:white;
+    font-size:1rem;
+    cursor:pointer;
+
+}
+
+
+.back-button{
+
+    background:white;
+
+    color:#0b2f6b;
+
+    border:none;
+
+    border-radius:12px;
+
+    padding:12px 20px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    margin-top:20px;
+
+}
+.back-button:hover{
+
+    background:#f0f0f0;
+
+}
+/* AI Home Screen */
+
+.home {
+    display:grid;
+    grid-template-columns: 2fr 1fr;
+    gap:30px;
+    align-items: start;
+}
+
+
+.ai-welcome {
+
+    background:white;
+    padding:30px;
+    border-radius:20px;
+    text-align:left;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+.quick-actions {
+    background:white;
+    padding:28px;
+    border-radius:20px;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+
+.ai-icon {
+
+    font-size:60px;
+}
+
+
+.ai-welcome h2 {
+
+    color:#0b2e59;
+    margin:15px 0;
+
+}
+
+
+.ai-input {
+
+    display:flex;
+    margin-top:25px;
+    gap:10px;
+
+}
+
+
+.ai-input input {
+
+    flex:1;
+    padding:14px;
+    border-radius:10px;
+    border:1px solid #ccc;
+
+}
+
+
+.ai-input button {
+
+    background:#0b2e59;
+    color:white;
+    border:none;
+    border-radius:10px;
+    padding:0 20px;
+
+}
+
+
+.quick-actions h3 {
+
+    color:#0b2e59;
+
+}
+
+
+.action-card {
+
+    background:#f8fafc;
+    margin-top:0;
+    padding:20px;
+    border-radius:18px;
+    display:flex;
+    gap:18px;
+    align-items:center;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    cursor:pointer;
+    transition: transform .2s ease, background .2s ease;
+
+}
+
+.action-card:hover {
+    transform: translateY(-2px);
+    background:#ffffff;
+}
+
+
+.action-card:first-letter {
+
+    font-size:30px;
+
+}
+
+
+/* Bottom Navigation */
+
+.bottom-nav {
+
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+
+    background:white;
+
+    display:flex;
+    justify-content:space-around;
+
+    padding:12px;
+
+    box-shadow:0 -5px 15px rgba(0,0,0,.1);
+
+}
+
+
+.bottom-nav a {
+
+    text-decoration:none;
+    color:#555;
+    text-align:center;
+    font-size:.8rem;
+
+}
+
+
+.bottom-nav .active {
+
+    color:#0b2e59;
+
+}/* Avery AI Employee */
+
+.ai-avatar {
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 15px auto;
+
+}
+
+.ai-avatar img {
+
+    width: 90px;
+    height: 90px;
+
+    object-fit: cover;
+
+    border-radius: 50%;
+
+    border: 3px solid #0b2e59;
+
+    display: block;
+
+}
+.ai-welcome h2 {
+
+    color:#0b2e59;
+    font-size:2rem;
+
+}
+
+
+.ai-welcome h3 {
+
+    color:#555;
+    font-weight:normal;
+    margin-bottom:10px;
+
+}
+
+
+.powered {
+
+    font-size:.85rem;
+    color:#777;
+
+}
+
+
+.ai-message {
+
+    margin-top:25px;
+    line-height:1.5;
+    color:#444;
+
+}
+
+
+.chat-box {
+
+    display:flex;
+    gap:10px;
+    margin-top:25px;
+
+}
+
+
+.chat-box input {
+
+    flex:1;
+    padding:15px;
+    border-radius:12px;
+    border:1px solid #ccc;
+
+}
+
+
+.chat-box button {
+
+    background:#0b2e59;
+    color:white;
+    border:none;
+    border-radius:12px;
+    padding:0 20px;
+    cursor:pointer;
+
+}
+/* Avery Chat */
+
+.chat-container {
+
+    margin-top:25px;
+
+}
+
+
+.messages {
+
+    background:#f5f7fa;
+
+    padding:15px;
+
+    border-radius:15px;
+
+    min-height:220px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:15px;
+
+}
+
+
+.message {
+
+    padding:12px 15px;
+
+    border-radius:15px;
+
+    max-width:85%;
+
+    line-height:1.4;
+
+}
+
+
+.avery-message {
+
+    background:white;
+
+    align-self:flex-start;
+
+}
+
+
+.user-message {
+
+    background:#0b2e59;
+
+    color:white;
+
+    align-self:flex-end;
+
+}
+.avery-message button {
+
+    margin-top:10px;
+
+    background:#0b2e59;
+
+    color:white;
+
+    border:none;
+
+    padding:10px 15px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+}
+.typing span {
+
+    font-style: italic;
+    opacity: .6;
+
+}
+.hidden {
+
+    display:none;
+
+}
+
+
+textarea {
+
+    width:100%;
+    min-height:100px;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #ccc;
+
+}
+.progress-fill {
+
+    transition: width .4s ease;
+
+}
+.avery-guide-avatar{
+
+    width:80px;
+    height:80px;
+
+    min-width:80px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+    object-position:center;
+
+    flex-shrink:0;
+
+}
+.avery-guide-avatar{
+
+    width:72px;
+    height:72px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+    border:3px solid #0b2f6b;
+
+}
+
+.job-title{
+
+    color:#666;
+    font-size:.9rem;
+    margin-bottom:8px;
+
+}
+.review-box{
+
+    background:#f5f7fb;
+
+    padding:15px;
+
+    border-radius:12px;
+
+    margin-bottom:20px;
+
+}
+
+.review-box p{
+
+    margin:8px 0;
+
+}
+.dashboard-container{
+
+padding:20px;
+
+}
+
+
+.dashboard-card{
+
+background:white;
+
+padding:20px;
+
+margin-bottom:20px;
+
+border-radius:16px;
+
+box-shadow:0 2px 8px rgba(0,0,0,.08);
+
+}
+
+
+.dashboard-card h2{
+
+color:#0b2f6b;
+
+}
+/* Top Navigation */
+
+.top-nav{
+
+    position: relative;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height: 90px;
+
+    padding:15px 20px;
+
+    margin:15px;
+
+    background:#fcfbfb;
+
+    border-radius:20px;
+    box-shadow:0 6px 18px rgba(0,0,0,.15);
+
+}
+.logo{
+
+    max-height:90px;
+    width:auto;
+    max-width:440px;
+    object-fit:contain;
+
+}
+.menu-button{
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    font-size:28px;
+
+    cursor:pointer;
+
+    color:rgb(23, 13, 44);
+
+}
+
+.side-menu{
+
+    position:fixed;
+
+    top:0;
+
+    right:-300px;
+
+    width:280px;
+
+    height:100%;
+
+    background:white;
+
+    padding:30px;
+
+    transition:.3s;
+
+    z-index:1000;
+
+}.close-menu{
+
+    position:absolute;
+
+    top:20px;
+
+    right:20px;
+
+    font-size:28px;
+
+    border:none;
+
+    background:none;
+
+    cursor:pointer;
+
+}
+.side-menu.active{
+
+    right:0;
+
+}
+
+
+.side-menu a{
+
+    display:block;
+
+    margin:20px 0;
+
+    text-decoration:none;
+
+    color:#0b2f6b;
+
+    font-size:18px;
+
+}
+@media (max-width:900px){
+    .app {
+        max-width: 100%;
+        padding: 20px;
+    }
+    .home {
+        display:flex;
+        flex-direction:column;
+        gap:30px;
+    }
+    .ai-welcome,
+    .quick-actions {
+        padding:24px;
+    }
+    .bottom-nav {
+        display:flex;
+    }
+}
+
+@media (min-width:900px) {
+    .bottom-nav {
+        display: none;
+    }
+}
+
+@media (max-width:768px){
+
+    input,
+    textarea,
+    select{
+
+        padding:12px;
+
+        font-size:15px;
+
+    }
+
+}
+.progress p{
+
+    color:white;
+
+    font-weight:bold;
+
+}
+/* Avery Chat */
+
+.avery-chat{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:18px;
+
+    margin:20px;
+
+    box-shadow:0 6px 18px rgba(0,0,0,.12);
+
+}
+
+.avery-header{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    margin-bottom:15px;
+
+}
+
+.avery-small-avatar{
+
+    width:60px;
+
+    height:60px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+}
+
+.avery-header span{
+
+    font-size:14px;
+
+    color:#777;
+
+}
+
+.avery-bubble{
+
+    background:#f5f5f5;
+
+    padding:16px;
+
+    border-radius:18px;
+
+    line-height:1.5;
+
+}
+.page-header{
+
+    background:white;
+
+    border-radius:20px;
+
+    margin:20px;
+
+    padding:25px;
+
+    text-align:center;
+
+}
+
+.page-logo{
+
+    height:80px;
+
+    width:auto;
+
+    margin-bottom:10px;
+
+}
+
+.avery-card{
+
+    background:white;
+
+    border-radius:20px;
+
+    margin:20px;
+
+    padding:20px;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+
+}
+
+.avery-header{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    margin-bottom:15px;
+
+}
+
+.avery-small-avatar{
+
+    width:60px;
+
+    height:60px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+}
+
+.avery-bubble{
+
+    background:#f3f3f3;
+
+    border-radius:18px;
+
+    padding:18px;
+
+}
+.progress-container{
+
+    width:100%;
+
+    max-width:600px;
+
+    margin:20px auto;
+
+    text-align:center;
+
+}
+
+.progress-container p{
+
+    color:white;
+
+    font-weight:bold;
+
+    text-align:center;
+
+    margin:0 0 10px 0;
+
+}
+.request-card{
+
+    background:white;
+
+    border-radius:20px;
+
+    padding:20px;
+
+    margin-bottom:20px;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+.status-pending{
+
+    color:#d97706;
+
+    font-weight:bold;
+
+}
+
+.status-accepted{
+
+    color:#16a34a;
+
+    font-weight:bold;
+
+}
+
+.secondary-button{
+
+    background:#16a34a;
+
+    color:white;
+
+    border:none;
+
+    cursor:default;
+
+    padding:12px 28px;
+
+    min-width:170px;
+
+    border-radius:12px;
+
+    font-weight:600;
+
+    text-align:center;
+
+}
+
+.dispatch-overview{
+
+background:white;
+
+border-radius:20px;
+
+padding:25px;
+
+margin-bottom:25px;
+
+}
+
+
+
+.overview-grid{
+
+display:grid;
+
+grid-template-columns:repeat(4, minmax(0, 1fr));
+
+gap:15px;
+
+width:100%;
+
+}
+
+
+.overview-card{
+
+background:#f5f7fa;
+
+border-radius:15px;
+
+padding:20px;
+
+text-align:center;
+
+box-sizing:border-box;
+
+min-width:0;
+
+}
+
+
+.overview-card h3{
+
+font-size:32px;
+
+margin:0;
+
+}
+
+@media(max-width:768px){
+
+.overview-grid{
+
+grid-template-columns:1fr 1fr;
+
+}
+
+}
+
+.dispatch-overview h2{
+
+margin-bottom:20px;
+
+}
+
+.dispatch-overview{
+
+overflow:hidden;
+
+}
+
+/* AI ACTIVITY FEED */
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 10px;
+}
+
+
+.activity-item span {
+    font-size: 1.5rem;
+}
+
+
+.activity-item p {
+    margin: 0;
+    flex: 1;
+}
+
+
+.activity-item small {
+    opacity: .6;
+}

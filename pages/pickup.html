@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schedule Pickup | EskoDSK AI</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+<div class="app">
+
+<header class="top-nav">
+    <img src="../assets/images/logo.PNG" class="logo">
+    <div class="menu-button" onclick="toggleMenu()">☰</div>
+</header>
+
+<div class="side-menu" id="sideMenu">
+    <button class="close-menu" onclick="toggleMenu()">✕</button>
+    <a href="../index.html">Home</a>
+    <a href="../dashboard.html">Owner's Dashboard</a>
+    <a href="quote.html">Request Quote</a>
+    <a href="contact.html">Contact Customer Service</a>
+</div>
+
+<div class="page-header">
+    <h1>Schedule Pickup</h1>
+</div>
+
+<div class="avery-card">
+    <div class="avery-header">
+        <img src="../assets/images/avery.png" class="avery-small-avatar">
+        <div>
+            <strong>Avery</strong><br>
+            <span>Virtual Administrative Assistant</span><br>
+            <small>Powered by EskoDSK AI</small>
+        </div>
+    </div>
+
+    <div class="avery-bubble">
+        <p id="averyPrompt">
+            I'll help you schedule your pickup. I’ve already filled in the basics, and I’m ready for the rest of the details below.
+        </p>
+    </div>
+</div>
+
+<div class="progress-container">
+    <p id="progressText">Step 1 of 4</p>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+</div>
+
+<main class="pickup-container">
+
+<div class="form-card" id="step1">
+    <h2>Customer Information</h2>
+
+    <label>Full Name</label>
+    <input type="text" id="fullName" placeholder="First and last name" required>
+
+    <label>Business Name</label>
+    <input type="text" id="businessName" placeholder="Business or organization" required>
+
+    <label>Delivery Type</label>
+    <select id="deliveryType" required>
+        <option value="">Select delivery type</option>
+        <option>STAT</option>
+        <option>Rush</option>
+        <option>Same-Day</option>
+        <option>Scheduled</option>
+    </select>
+
+    <label>Email Address</label>
+    <input type="email" id="email" placeholder="Email address" required>
+
+    <label>Phone Number</label>
+    <input type="tel" id="phone" placeholder="Phone number" required>
+
+    <button class="primary-button" onclick="nextStep(2)">Next →</button>
+</div>
+
+<div class="form-card hidden" id="step2">
+    <h2>Pickup & Delivery Details</h2>
+
+    <label>Pickup Facility / Business</label>
+    <input type="text" id="pickupFacility" placeholder="Pickup facility or business" required>
+
+    <label>Pickup Address</label>
+    <input type="text" id="pickupAddress" placeholder="Pickup address" required>
+
+    <label>Pickup Contact</label>
+    <input type="text" id="pickupContact" placeholder="Pickup contact name" required>
+
+    <label>Pickup Phone</label>
+    <input type="tel" id="pickupPhone" placeholder="Pickup phone number" required>
+
+    <label>Delivery Facility / Business</label>
+    <input type="text" id="deliveryFacility" placeholder="Delivery facility or business" required>
+
+    <label>Delivery Address</label>
+    <input type="text" id="deliveryAddress" placeholder="Delivery address" required>
+
+    <label>Delivery Contact</label>
+    <input type="text" id="deliveryContact" placeholder="Delivery contact name" required>
+
+    <label>Delivery Phone</label>
+    <input type="tel" id="deliveryPhone" placeholder="Delivery phone number" required>
+
+    <label>Package / Specimen Type</label>
+    <input type="text" id="packageType" placeholder="Package or specimen type" required>
+
+    <button class="secondary-button" onclick="nextStep(1)">← Back</button>
+    <button class="primary-button" onclick="nextStep(3)">Continue →</button>
+</div>
+
+<div class="form-card hidden" id="step3">
+    <h2>Scheduling</h2>
+
+    <label>Pickup Date</label>
+    <input type="date" id="pickupDate" required>
+
+    <label>Pickup Time</label>
+    <input type="time" id="pickupTime" required>
+
+    <label>Additional Instructions / Comments</label>
+    <textarea id="comments" placeholder="Any additional instructions or comments?"></textarea>
+
+    <button class="secondary-button" onclick="nextStep(2)">← Back</button>
+    <button class="primary-button" onclick="nextStep(4)">Review Request →</button>
+</div>
+
+<div class="form-card hidden" id="step4">
+    <h2>Review Request</h2>
+
+    <div class="review-box">
+        <p><strong>Full Name:</strong> <span id="reviewFullName"></span></p>
+        <p><strong>Business Name:</strong> <span id="reviewBusinessName"></span></p>
+        <p><strong>Delivery Type:</strong> <span id="reviewDeliveryType"></span></p>
+        <p><strong>Email:</strong> <span id="reviewEmail"></span></p>
+        <p><strong>Phone:</strong> <span id="reviewPhone"></span></p>
+        <p><strong>Pickup Facility:</strong> <span id="reviewPickupFacility"></span></p>
+        <p><strong>Pickup Address:</strong> <span id="reviewPickupAddress"></span></p>
+        <p><strong>Pickup Contact:</strong> <span id="reviewPickupContact"></span></p>
+        <p><strong>Pickup Phone:</strong> <span id="reviewPickupPhone"></span></p>
+        <p><strong>Delivery Facility:</strong> <span id="reviewDeliveryFacility"></span></p>
+        <p><strong>Delivery Address:</strong> <span id="reviewDeliveryAddress"></span></p>
+        <p><strong>Delivery Contact:</strong> <span id="reviewDeliveryContact"></span></p>
+        <p><strong>Delivery Phone:</strong> <span id="reviewDeliveryPhone"></span></p>
+        <p><strong>Package Type:</strong> <span id="reviewPackageType"></span></p>
+        <p><strong>Pickup Date:</strong> <span id="reviewPickupDate"></span></p>
+        <p><strong>Pickup Time:</strong> <span id="reviewPickupTime"></span></p>
+        <p><strong>Comments:</strong> <span id="reviewComments"></span></p>
+    </div>
+
+    <button class="secondary-button" onclick="nextStep(3)">← Back</button>
+    <button class="primary-button" onclick="submitRequest()">Submit Request</button>
+</div>
+
+<div class="form-card hidden" id="complete">
+    <div id="confirmationContent" class="review-box"></div>
+</div>
+</main>
+
+<script src="../js/navigation.js"></script>
+<script src="../Avery/memory.js"></script>
+<script src="../Avery/tracking.js"></script>
+<script src="../js/pickup.js"></script>
+<script src="../Avery/actions.js"></script>
+<script src="../Avery/knowledge.js"></script>
+<script src="../js/script.js"></script>
+<script src="../Avery/populateform.js"></script>
+<script>
+populatePickupForm();
+</script>
+</div>
+</body>
+</html>

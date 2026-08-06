@@ -1,0 +1,21 @@
+const AveryIntents = {
+
+    START_PICKUP: "START_PICKUP",
+
+    REQUEST_QUOTE: "REQUEST_QUOTE",
+
+    CONTACT_DISPATCH: "CONTACT_DISPATCH",
+
+    GO_HOME: "GO_HOME",
+
+    OPEN_PROFILE: "OPEN_PROFILE",
+
+    VIEW_DASHBOARD: "VIEW_DASHBOARD",
+
+    HELP: "HELP",
+
+    UNKNOWN: "UNKNOWN"
+
+};
+
+window.AveryIntents = AveryIntents;

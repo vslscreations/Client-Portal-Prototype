@@ -6,19 +6,19 @@ const AveryActions = {
     // Navigation Actions
 
     goHome: function () {
-        window.location.href = "index.html";
+        window.location.href = window.resolvePortalPath ? window.resolvePortalPath("index.html") : "index.html";
     },
 
     openPickup: function () {
-        window.location.href = "pickup.html";
+        window.location.href = window.resolvePortalPath ? window.resolvePortalPath("pages/pickup.html") : "pages/pickup.html";
     },
 
     openQuote: function () {
-        window.location.href = "quote.html";
+        window.location.href = window.resolvePortalPath ? window.resolvePortalPath("pages/quote.html") : "pages/quote.html";
     },
 
     openDispatch: function () {
-        window.location.href = "contact.html";
+        window.location.href = window.resolvePortalPath ? window.resolvePortalPath("pages/contact.html") : "pages/contact.html";
     },
 
 
@@ -26,7 +26,7 @@ const AveryActions = {
 
     logout: function () {
         localStorage.clear();
-        window.location.href = "login.html";
+        window.location.href = window.resolvePortalPath ? window.resolvePortalPath("login.html") : "login.html";
     },
 
 
@@ -41,3 +41,13 @@ const AveryActions = {
 
 // Make Avery actions available everywhere
 window.AveryActions = AveryActions;
+
+AveryActions.startPickupTask = function(){
+
+    const task = AveryTaskModel.createPickupTask();
+
+    AveryMemory.set("currentTask", task);
+
+    return task;
+
+};
