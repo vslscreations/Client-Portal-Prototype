@@ -132,6 +132,22 @@ function submitRequest(){
     const request = buildPickupRequestRecord(formValues);
     savePickupRequestRecord(request);
 
+    // Preserve the latest customer identity in Avery's memory for future repeat workflows.
+    if (window.AveryMemory && typeof window.AveryMemory.saveCustomerProfile === "function") {
+        window.AveryMemory.saveCustomerProfile({
+            firstName: (formValues.fullName || "").trim().split(/\s+/)[0] || "",
+            lastName: (formValues.fullName || "").trim().split(/\s+/).slice(1).join(" ") || "",
+            companyName: formValues.businessName,
+            email: formValues.email,
+            phone: formValues.phone
+        });
+    }
+
+    // Keep a reusable route history in Avery's memory so repeated pickup paths can be reused later.
+    if (window.AveryMemory && typeof window.AveryMemory.savePickupRoute === "function") {
+        window.AveryMemory.savePickupRoute(formValues, request.trackingId);
+    }
+
     const confirmationPayload = {
         trackingId: request.trackingId,
         pickupAddress: request.delivery.pickupAddress,
@@ -173,3 +189,22 @@ window.nextStep = nextStep;
 window.submitRequest = submitRequest;
 window.getCurrentStepNumber = getCurrentStepNumber;
 window.validateCurrentStep = validateCurrentStep;
+
+function initializeReturningCustomerPickupPrompt(){
+    const prompt = document.getElementById("averyPrompt");
+    if(!prompt || !window.AveryWorkflowEngine) {
+        return;
+    }
+
+    const response = window.AveryWorkflowEngine.start("START_PICKUP");
+    if(response){
+        prompt.innerHTML = response;
+    }
+}
+
+if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", initializeReturningCustomerPickupPrompt);
+} else {
+    initializeReturningCustomerPickupPrompt();
+}
+

@@ -64,11 +64,11 @@ Home
 <div class="page-header">
 
 <h1>
-Business Dashboard
+Customer Portal Dashboard
 </h1>
 
 <p>
-Manage your customers, requests, and daily operations with AI assistance.
+Review pickup requests, quote submissions, and status updates in one place.
 </p>
 
 </div>
@@ -232,16 +232,13 @@ Business Overview
 📋 Customer Requests
 </h2>
 
-
-<div id="requestList">
+<div id="requestList" class="request-list">
 
 <p>
 No new requests yet.
 </p>
 
-
 </div>
-
 
 </div>
 
@@ -419,11 +416,12 @@ Avery will analyze requests, identify trends, and help improve your daily workfl
 <script src="js/navigation.js"></script>
 <script src="js/script.js"></script>
 
-
 <script>
-
-loadDashboard();
-
+if (localStorage.getItem("isLoggedIn") !== "true") {
+    window.location.replace(resolvePortalPath("login.html"));
+} else {
+    loadDashboard();
+}
 </script>
 
 

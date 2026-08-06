@@ -157,11 +157,16 @@
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
         
-        // Demo: accept any username and password
         if (username && password) {
-            // Redirect to dashboard
-            window.location.href = 'dashboard.html';
+            localStorage.setItem('isLoggedIn', 'true');
+            const params = new URLSearchParams(window.location.search);
+            const nextPage = params.get('next') || 'dashboard.html';
+            window.location.href = nextPage;
         }
+    }
+
+    if (localStorage.getItem('isLoggedIn') === 'true') {
+        window.location.replace('dashboard.html');
     }
 </script>
 

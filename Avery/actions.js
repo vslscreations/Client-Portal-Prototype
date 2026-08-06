@@ -32,6 +32,46 @@ const AveryActions = {
 
     // Avery System Actions
 
+    populatePickupForm: function(task) {
+        const currentTask = task || AveryMemory.get("currentTask", null);
+        if(!currentTask){
+            console.log("No Avery task found");
+            return null;
+        }
+
+        const fields = currentTask.fields || {};
+        console.log("✅ Task fields populated", fields);
+
+        const setValue = function(id, value) {
+            const element = document.getElementById(id);
+            if(element){
+                element.value = value || "";
+            }
+        };
+
+        setValue("fullName", fields.fullName || fields.customerName || fields.contactName || "");
+        setValue("businessName", fields.businessName || fields.companyName || "");
+        setValue("email", fields.email || "");
+        setValue("phone", fields.phone || fields.phoneNumber || "");
+        setValue("deliveryType", fields.deliveryType || fields.serviceLevel || "");
+        setValue("pickupFacility", fields.pickupFacility || "");
+        setValue("pickupAddress", fields.pickupAddress || "");
+        setValue("pickupContact", fields.pickupContact || "");
+        setValue("pickupPhone", fields.pickupPhone || fields.pickupPhoneNumber || "");
+        setValue("deliveryFacility", fields.deliveryFacility || "");
+        setValue("deliveryAddress", fields.deliveryAddress || "");
+        setValue("deliveryContact", fields.deliveryContact || "");
+        setValue("deliveryPhone", fields.deliveryPhone || "");
+        setValue("packageType", fields.packageType || "");
+
+        if(typeof window.populateReview === "function") {
+            window.populateReview();
+        }
+
+        console.log("✅ HTML form populated", fields);
+        return currentTask;
+    },
+
     showMessage: function(message) {
         console.log("Avery:", message);
     }
@@ -47,6 +87,7 @@ AveryActions.startPickupTask = function(){
     const task = AveryTaskModel.createPickupTask();
 
     AveryMemory.set("currentTask", task);
+    console.log("✅ Task created", task);
 
     return task;
 
