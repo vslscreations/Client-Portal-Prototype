@@ -1,3 +1,183 @@
+function escapeHtml(value){
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function getOwnerAveryResponse(text){
+    const lowerText = (text || "").toLowerCase();
+    const analytics = window.AveryAnalytics;
+    const today = analytics && typeof analytics.getTodayOperations === "function"
+        ? analytics.getTodayOperations()
+        : null;
+    const overview = analytics && typeof analytics.getBusinessOverview === "function"
+        ? analytics.getBusinessOverview()
+        : null;
+    const requests = JSON.parse(localStorage.getItem("requests") || "[]");
+
+    if (lowerText.includes("today's schedule") || lowerText.includes("todays schedule") || lowerText.includes("schedule today") || lowerText.includes("what's today's schedule") || lowerText.includes("what is today's schedule")) {
+        if (!today) {
+            return "I don't have enough operational data yet to summarize today's schedule.";
+        }
+        return `
+            <strong>Today's schedule</strong><br>
+            • Pickups scheduled today: ${today.pickupsScheduledToday || 0}<br>
+            • Pending requests: ${today.pendingRequests || 0}<br>
+            • Active deliveries: ${today.activeDeliveries || 0}
+        `;
+    }
+
+    if (lowerText.includes("how is business doing") || lowerText.includes("business doing") || lowerText.includes("business health") || lowerText.includes("how is the business")) {
+        if (!overview) {
+            return "I don't have enough business data yet to summarize performance.";
+        }
+        return `
+            <strong>Business snapshot</strong><br>
+            • Total pickups: ${overview.totalPickups || 0}<br>
+            • Total customers: ${overview.totalCustomers || 0}<br>
+            • Top customer: ${overview.topCustomer || "No activity yet"}<br>
+            • Most used route: ${overview.mostUsedRoute || "No route data yet"}
+        `;
+    }
+
+    if (lowerText.includes("top customers") || lowerText.includes("who are my top customers") || lowerText.includes("customer activity")) {
+        if (!overview || !overview.customerCounts) {
+            return "I don't have enough customer activity data yet.";
+        }
+        const customerEntries = Object.entries(overview.customerCounts).sort(function (a, b) {
+            return b[1] - a[1];
+        }).slice(0, 5);
+        if (!customerEntries.length) {
+            return "No customer activity has been recorded yet.";
+        }
+        return `
+            <strong>Top customers</strong><br>
+            ${customerEntries.map(function (entry) {
+                return `• ${escapeHtml(entry[0])}: ${entry[1]} request${entry[1] === 1 ? "" : "s"}`;
+            }).join("<br>")}
+        `;
+    }
+
+    if (lowerText.includes("routes") || lowerText.includes("route") || lowerText.includes("what routes do we use most") || lowerText.includes("most used route")) {
+        if (!overview || !overview.routeCounts) {
+            return "I don't have enough route data yet.";
+        }
+        const routeEntries = Object.entries(overview.routeCounts).sort(function (a, b) {
+            return b[1] - a[1];
+        }).slice(0, 5);
+        if (!routeEntries.length) {
+            return "No route activity has been recorded yet.";
+        }
+        return `
+            <strong>Most used routes</strong><br>
+            ${routeEntries.map(function (entry) {
+                return `• ${escapeHtml(entry[0])}: ${entry[1]} time${entry[1] === 1 ? "" : "s"}`;
+            }).join("<br>")}
+        `;
+    }
+
+    if (lowerText.includes("recent requests") || lowerText.includes("show recent requests") || lowerText.includes("latest requests")) {
+        if (!requests.length) {
+            return "There are no recent requests to display yet.";
+        }
+        const recentRequests = requests.slice(-5).reverse();
+        return `
+            <strong>Recent requests</strong><br>
+            ${recentRequests.map(function (request) {
+                const customer = request && request.customer && (request.customer.companyName || request.customer.customerName)
+                    ? request.customer.companyName || request.customer.customerName
+                    : "Customer";
+                const status = request && request.status ? request.status : "Pending";
+                const date = request && request.createdAt ? new Date(request.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "recently";
+                return `• ${escapeHtml(customer)} — ${escapeHtml(status)} — ${escapeHtml(date)}`;
+            }).join("<br>")}
+        `;
+    }
+
+    return AveryResponses.OWNER_HELP || "I can summarize today's schedule, business performance, top customers, route usage, and recent requests.";
+}
+
+function appendOwnerAveryMessage(role, content){
+    const messages = document.getElementById("ownerAveryMessages");
+    if (!messages) {
+        return;
+    }
+
+    const wrapperClass = role === "user" ? "user-message" : "avery-message";
+    const label = role === "user" ? "You" : "Avery";
+
+    messages.insertAdjacentHTML("beforeend", `
+        <div class="message ${wrapperClass}">
+            <strong>${escapeHtml(label)}:</strong>
+            <div>${content}</div>
+        </div>
+    `);
+
+    messages.scrollTop = messages.scrollHeight;
+}
+
+function sendOwnerAveryMessage(){
+    const input = document.getElementById("ownerAveryInput");
+    const messages = document.getElementById("ownerAveryMessages");
+
+    if (!input || !messages) {
+        return;
+    }
+
+    const text = input.value.trim();
+    if (!text) {
+        return;
+    }
+
+    appendOwnerAveryMessage("user", escapeHtml(text));
+    input.value = "";
+
+    const typing = document.createElement("div");
+    typing.className = "message avery-message owner-avery-typing";
+    typing.innerHTML = "<strong>Avery:</strong><div>is typing…</div>";
+    messages.appendChild(typing);
+    messages.scrollTop = messages.scrollHeight;
+
+    setTimeout(function () {
+        if (typing.parentNode) {
+            typing.remove();
+        }
+        appendOwnerAveryMessage("avery", getOwnerAveryResponse(text));
+    }, 700);
+}
+
+function initOwnerAveryDashboard(){
+    const input = document.getElementById("ownerAveryInput");
+    const button = document.getElementById("ownerAverySend");
+    const messages = document.getElementById("ownerAveryMessages");
+
+    if (!input || !button || !messages) {
+        return;
+    }
+
+    if (input.dataset.bound === "true") {
+        return;
+    }
+
+    input.dataset.bound = "true";
+    button.addEventListener("click", sendOwnerAveryMessage);
+    input.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            sendOwnerAveryMessage();
+        }
+    });
+
+    const initialMessage = document.createElement("div");
+    initialMessage.className = "message avery-message";
+    initialMessage.innerHTML = `<strong>Avery:</strong><div>${AveryResponses.OWNER_WELCOME || "I can help with your daily operations."}</div>`;
+    messages.appendChild(initialMessage);
+    messages.scrollTop = messages.scrollHeight;
+}
+
 function sendMessage(){
 
     const input = document.getElementById("userInput");
@@ -424,6 +604,8 @@ function toggleRequestDetails(index){
 }
 
 function loadDashboard(){
+    initOwnerAveryDashboard();
+
     const requests = JSON.parse(localStorage.getItem("requests") || "[]");
     const requestList = document.getElementById("requestList");
 
@@ -439,6 +621,7 @@ function loadDashboard(){
             </div>
         `;
         updateOverview([]);
+        renderDashboardAnalytics();
         return;
     }
 
@@ -485,6 +668,7 @@ function loadDashboard(){
     });
 
     updateOverview(requests);
+    renderDashboardAnalytics();
 }
 
 function updateOverview(requests){
@@ -519,6 +703,55 @@ function updateOverview(requests){
     if(acceptedCount){ acceptedCount.innerText = inProgress; }
     if(assignedCount){ assignedCount.innerText = activeTasks; }
     if(completedCount){ completedCount.innerText = completed; }
+}
+
+function renderDashboardAnalytics(){
+    const analytics = window.AveryAnalytics && typeof window.AveryAnalytics.getTodayOperations === "function"
+        ? window.AveryAnalytics.getTodayOperations()
+        : null;
+    const overview = window.AveryAnalytics && typeof window.AveryAnalytics.getBusinessOverview === "function"
+        ? window.AveryAnalytics.getBusinessOverview()
+        : null;
+    const insights = window.AveryAnalytics && typeof window.AveryAnalytics.getAveryInsights === "function"
+        ? window.AveryAnalytics.getAveryInsights()
+        : [];
+
+    if(analytics){
+        const pickups = document.getElementById("todayPickupsCount");
+        const pending = document.getElementById("todayPendingCount");
+        const active = document.getElementById("todayActiveCount");
+        const completed = document.getElementById("todayCompletedCount");
+
+        if(pickups){ pickups.innerText = analytics.pickupsScheduledToday || 0; }
+        if(pending){ pending.innerText = analytics.pendingRequests || 0; }
+        if(active){ active.innerText = analytics.activeDeliveries || 0; }
+        if(completed){ completed.innerText = analytics.completedDeliveries || 0; }
+    }
+
+    if(overview){
+        const totalPickups = document.getElementById("analyticsTotalPickups");
+        const totalCustomers = document.getElementById("analyticsTotalCustomers");
+        const topCustomer = document.getElementById("analyticsTopCustomer");
+        const mostUsedRoute = document.getElementById("analyticsMostUsedRoute");
+        const revenue = document.getElementById("analyticsEstimatedRevenue");
+
+        if(totalPickups){ totalPickups.innerText = overview.totalPickups || 0; }
+        if(totalCustomers){ totalCustomers.innerText = overview.totalCustomers || 0; }
+        if(topCustomer){ topCustomer.innerText = overview.topCustomer || "—"; }
+        if(mostUsedRoute){ mostUsedRoute.innerText = overview.mostUsedRoute || "—"; }
+        if(revenue){ revenue.innerText = overview.estimatedRevenue ? "$" + overview.estimatedRevenue.toLocaleString() : "$0"; }
+    }
+
+    const insightsList = document.getElementById("averyInsightsList");
+    if(insightsList){
+        if(insights && insights.length){
+            insightsList.innerHTML = insights.map(function(insight){
+                return `<div class="activity-item"><span>✨</span><p>${insight}</p></div>`;
+            }).join("");
+        } else {
+            insightsList.innerHTML = '<p>Continue processing requests and Avery will learn your business patterns.</p>';
+        }
+    }
 }
 
 function acceptRequest(id){

@@ -45,6 +45,28 @@ const AveryResponses = {
         ✔ Quotes
         <br>
         ✔ Contacting our team
+    `,
+
+    OWNER_WELCOME: `
+        I can help you review daily operations.
+
+        <br><br>
+
+        Try asking:
+        <br>
+        • What's today's schedule?
+        <br>
+        • How is business doing?
+        <br>
+        • Who are my top customers?
+        <br>
+        • What routes do we use most?
+        <br>
+        • Show recent requests
+    `,
+
+    OWNER_HELP: `
+        I can summarize today's schedule, business performance, top customers, route usage, and recent requests.
     `
 
 };

@@ -2,417 +2,125 @@
 <html lang="en">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Business Dashboard | EskoDSK AI</title>
-
 <link rel="stylesheet" href="css/style.css">
-
 </head>
 
-
 <body>
-
-
 <div class="app">
 
-
-<!-- TOP NAVIGATION -->
-
 <header class="top-nav">
-
-<img src="assets/images/logo.PNG" class="logo">
-
-
-<div class="menu-button" onclick="toggleMenu()">
-
-☰
-
-</div>
-
+    <img src="assets/images/logo.PNG" class="logo">
+    <div class="menu-button" onclick="toggleMenu()">☰</div>
 </header>
 
-
-
-<!-- SIDE MENU -->
-
 <div class="side-menu" id="sideMenu">
-
-
-<button class="close-menu" onclick="toggleMenu()">
-
-✕
-
-</button>
-
-
-<a href="index.html">
-Home
-</a>
-
-
-
+    <button class="close-menu" onclick="toggleMenu()">✕</button>
+    <a href="index.html">Home</a>
 </div>
-
-
-
-
-<!-- PAGE HEADER -->
 
 <div class="page-header">
-
-<h1>
-Customer Portal Dashboard
-</h1>
-
-<p>
-Review pickup requests, quote submissions, and status updates in one place.
-</p>
-
+    <h1>Owner Operations Dashboard</h1>
+    <p>Monitor request volume, customer activity, and Avery insights in one place.</p>
 </div>
-
-
-
-
-
-<!-- AVERY CARD -->
 
 <div class="avery-card">
+    <div class="avery-header">
+        <img src="assets/images/avery.png" class="avery-small-avatar">
+        <div>
+            <strong>Avery</strong>
+            <br>
+            <span>AI Business Assistant</span>
+            <br>
+            <small>Powered by EskoDSK AI</small>
+        </div>
+    </div>
 
-
-<div class="avery-header">
-
-
-<img src="assets/images/avery.png" class="avery-small-avatar">
-
-
-<div>
-
-<strong>
-Avery
-</strong>
-
-<br>
-
-<span>
-AI Business Assistant
-</span>
-
-
-<br>
-
-<small>
-Powered by EskoDSK AI
-</small>
-
-
+    <div class="avery-bubble">
+        <p>Welcome back! I’m here to help you run daily operations, spot trends, and keep customer requests flowing smoothly.</p>
+    </div>
 </div>
-
-
-</div>
-
-
-
-<div class="avery-bubble">
-
-<p>
-Welcome back! I'm here to help manage customer requests, organize tasks, answer questions, and streamline your daily operations.
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
 
 <main class="dashboard-container">
-
-
-
-<!-- BUSINESS OVERVIEW -->
-
-<div class="dispatch-overview">
-
-
-<h2>
-Business Overview
-</h2>
-
-
-
-<div class="overview-grid">
-
-
-<div class="overview-card">
-
-<h3 id="pendingCount">
-0
-</h3>
-
-<p>
-📥 New Requests
-</p>
-
-</div>
-
-
-
-
-
-<div class="overview-card">
-
-<h3 id="acceptedCount">
-0
-</h3>
-
-<p>
-✅ In Progress
-</p>
-
-</div>
-
-
-
-
-
-<div class="overview-card">
-
-<h3 id="assignedCount">
-0
-</h3>
-
-<p>
-⚙️ Active Tasks
-</p>
-
-</div>
-
-
-
-
-
-<div class="overview-card">
-
-<h3 id="completedCount">
-0
-</h3>
-
-<p>
-✔ Completed
-</p>
-
-</div>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<!-- CUSTOMER REQUESTS -->
-
-
-<div class="dashboard-card">
-
-<h2>
-📋 Customer Requests
-</h2>
-
-<div id="requestList" class="request-list">
-
-<p>
-No new requests yet.
-</p>
-
-</div>
-
-</div>
-
-
-
-
-
-<!-- AI ACTIVITY FEED -->
-
-<div class="dashboard-card">
-
-<h2>
-🤖 Avery's Recent Activity
-</h2>
-
-
-<div class="activity-list">
-
-
-<div class="activity-item">
-
-<span>
-✅
-</span>
-
-<p>
-Avery answered a customer question about available services.
-</p>
-
-<small>
-Just now
-</small>
-
-</div>
-
-
-
-
-<div class="activity-item">
-
-<span>
-📋
-</span>
-
-<p>
-Avery created a new customer request and organized the information.
-</p>
-
-<small>
-2 minutes ago
-</small>
-
-</div>
-
-
-
-
-<div class="activity-item">
-
-<span>
-📩
-</span>
-
-<p>
-Avery sent a confirmation message to a customer.
-</p>
-
-<small>
-5 minutes ago
-</small>
-
-</div>
-
-
-
-
-<div class="activity-item">
-
-<span>
-⚙️
-</span>
-
-<p>
-Avery updated today's workflow and prepared the next task.
-</p>
-
-<small>
-10 minutes ago
-</small>
-
-</div>
-
-
-</div>
-
-
-</div>
-
-<!-- TODAY'S ACTIVITY -->
-
-
-<div class="dashboard-card">
-
-<h2>
-📅 Today's Activity
-</h2>
-
-
-<p>
-No scheduled activity yet.
-</p>
-
-
-</div>
-
-
-
-
-
-
-
-
-<!-- CUSTOMER COMMUNICATION -->
-
-
-<div class="dashboard-card">
-
-<h2>
-💬 Customer Messages
-</h2>
-
-
-<p>
-No new messages.
-</p>
-
-
-</div>
-
-
-
-
-
-
-<!-- AI INSIGHTS -->
-
-<div class="dashboard-card">
-
-<h2>
-🤖 AI Business Insights
-</h2>
-
-
-<p>
-Avery will analyze requests, identify trends, and help improve your daily workflow.
-</p>
-
-
-</div>
-
-
-
-
-
-
+    <div class="dashboard-card">
+        <h2>📅 Today's Operations</h2>
+        <div class="overview-grid">
+            <div class="overview-card">
+                <h3 id="todayPickupsCount">0</h3>
+                <p>🗓 Pickups Scheduled Today</p>
+            </div>
+            <div class="overview-card">
+                <h3 id="todayPendingCount">0</h3>
+                <p>⏳ Pending Requests</p>
+            </div>
+            <div class="overview-card">
+                <h3 id="todayActiveCount">0</h3>
+                <p>🚚 Active Deliveries</p>
+            </div>
+            <div class="overview-card">
+                <h3 id="todayCompletedCount">0</h3>
+                <p>✅ Completed Deliveries</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h2>📊 Business Overview</h2>
+        <div class="overview-grid">
+            <div class="overview-card">
+                <h3 id="analyticsTotalPickups">0</h3>
+                <p>📦 Total Pickups</p>
+            </div>
+            <div class="overview-card">
+                <h3 id="analyticsTotalCustomers">0</h3>
+                <p>👥 Total Customers</p>
+            </div>
+            <div class="overview-card">
+                <h3 id="analyticsTopCustomer">—</h3>
+                <p>⭐ Top Customer</p>
+            </div>
+            <div class="overview-card">
+                <h3 id="analyticsMostUsedRoute">—</h3>
+                <p>🛣 Most Used Route</p>
+            </div>
+            <div class="overview-card">
+                <h3 id="analyticsEstimatedRevenue">$0</h3>
+                <p>💰 Estimated Revenue</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h2>🤖 Avery Insights</h2>
+        <div id="averyInsightsList" class="activity-list">
+            <p>Continue processing requests and Avery will learn your business patterns.</p>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h2>📋 Customer Requests</h2>
+        <div id="requestList" class="request-list">
+            <p>No new requests yet.</p>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h2>🤖 Avery Activity</h2>
+        <div class="activity-list">
+            <div class="activity-item">
+                <span>✅</span>
+                <p>Avery is monitoring current requests and priorities.</p>
+                <small>Now</small>
+            </div>
+        </div>
+    </div>
 </main>
 
-
 </div>
 
-
-
-
-
+<script src="Avery/dashboardAnalytics.js"></script>
 <script src="js/navigation.js"></script>
 <script src="js/script.js"></script>
 
@@ -424,7 +132,5 @@ if (localStorage.getItem("isLoggedIn") !== "true") {
 }
 </script>
 
-
 </body>
-
 </html>
