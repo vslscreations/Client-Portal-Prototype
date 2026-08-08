@@ -106,6 +106,10 @@
 
     <div class="dashboard-card">
         <h2>📋 Customer Requests</h2>
+        <div class="request-tabs" role="tablist" aria-label="Customer request filters">
+            <button type="button" class="request-tab active" data-filter="active" role="tab" aria-selected="true">Awaiting Dispatch + Active</button>
+            <button type="button" class="request-tab" data-filter="completed" role="tab" aria-selected="false">Completed</button>
+        </div>
         <div id="requestList" class="request-list">
             <p>No new requests yet.</p>
         </div>

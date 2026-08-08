@@ -63,6 +63,30 @@
     gap: 16px;
 }
 
+.request-tabs {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.request-tab {
+    border: 1px solid #dbe4ee;
+    background: #f7faff;
+    color: #0b2f6b;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.request-tab.active {
+    background: #0b2f6b;
+    color: white;
+    border-color: #0b2f6b;
+}
+
 .dashboard-owner-chat-card {
     background: white;
     border-radius: 20px;

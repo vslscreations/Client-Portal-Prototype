@@ -791,31 +791,40 @@ function toggleRequestDetails(index){
     }
 }
 
-function loadDashboard(){
-    initOwnerAveryDashboard();
+function getDashboardRequestFilter(){
+    const activeTab = document.querySelector('.request-tab.active');
+    return activeTab && activeTab.getAttribute('data-filter') === 'completed' ? 'completed' : 'active';
+}
 
-    const requests = JSON.parse(localStorage.getItem("requests") || "[]");
+function renderDashboardRequests(requests){
     const requestList = document.getElementById("requestList");
-
     if(!requestList){
         return;
     }
 
-    if(requests.length === 0){
+    const filter = getDashboardRequestFilter();
+    const visibleRequests = requests.filter(function (request) {
+        const status = getRequestStatus(request);
+        if (filter === 'completed') {
+            return status === 'Completed';
+        }
+        return status !== 'Completed';
+    });
+
+    if(visibleRequests.length === 0){
         requestList.innerHTML = `
             <div class="empty-state">
-                <h3>No requests yet</h3>
-                <p>Submit a pickup request or request a quote to see your activity here.</p>
+                <h3>No ${filter === 'completed' ? 'completed' : 'active or pending'} requests yet</h3>
+                <p>${filter === 'completed' ? 'Completed requests will appear here once they are marked complete.' : 'Active and pending requests will appear here as they come in.'}</p>
             </div>
         `;
-        updateOverview([]);
-        renderDashboardAnalytics();
         return;
     }
 
     requestList.innerHTML = "";
 
-    requests.forEach((request, index)=>{
+    visibleRequests.forEach((request, visibleIndex)=>{
+        const originalIndex = requests.indexOf(request);
         const status = getRequestStatus(request);
         const statusClass = getRequestStatusClass(status);
         const trackingId = getRequestTrackingNumber(request);
@@ -827,7 +836,7 @@ function loadDashboard(){
         ` : "";
 
         requestList.innerHTML += `
-            <article class="request-card" data-index="${index}">
+            <article class="request-card" data-index="${originalIndex}">
                 <div class="request-card-header">
                     <div>
                         <h3>${getRequestTitle(request)}</h3>
@@ -837,8 +846,8 @@ function loadDashboard(){
                 </div>
 
                 <div class="request-status-row">
-                    <label class="request-status-label" for="requestStatus-${index}">Status</label>
-                    <select class="request-status-select ${statusClass}" id="requestStatus-${index}" onchange="updateRequestStatusFromSelect(${index}, this.value)">
+                    <label class="request-status-label" for="requestStatus-${originalIndex}">Status</label>
+                    <select class="request-status-select ${statusClass}" id="requestStatus-${originalIndex}" onchange="updateRequestStatusFromSelect(${originalIndex}, this.value)">
                         <option value="Awaiting Dispatch" ${status === "Awaiting Dispatch" ? "selected" : ""}>Awaiting Dispatch</option>
                         <option value="Active" ${status === "Active" ? "selected" : ""}>Active</option>
                         <option value="Completed" ${status === "Completed" ? "selected" : ""}>Completed</option>
@@ -856,7 +865,7 @@ function loadDashboard(){
 
                 <div class="request-actions">
                     <a class="request-link" href="pages/tracking-status.html">Track Request</a>
-                    <button type="button" class="request-toggle" onclick="toggleRequestDetails(${index})">Show More</button>
+                    <button type="button" class="request-toggle" onclick="toggleRequestDetails(${originalIndex})">Show More</button>
                 </div>
 
                 <div class="request-details">
@@ -865,7 +874,48 @@ function loadDashboard(){
             </article>
         `;
     });
+}
 
+function attachRequestFilterHandlers(){
+    document.querySelectorAll('.request-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            document.querySelectorAll('.request-tab').forEach(function (item) {
+                item.classList.remove('active');
+                item.setAttribute('aria-selected', 'false');
+            });
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            const requests = JSON.parse(localStorage.getItem("requests") || "[]");
+            renderDashboardRequests(requests);
+        });
+    });
+}
+
+function loadDashboard(){
+    initOwnerAveryDashboard();
+
+    const requests = JSON.parse(localStorage.getItem("requests") || "[]");
+    const requestList = document.getElementById("requestList");
+
+    if(!requestList){
+        return;
+    }
+
+    attachRequestFilterHandlers();
+
+    if(requests.length === 0){
+        requestList.innerHTML = `
+            <div class="empty-state">
+                <h3>No requests yet</h3>
+                <p>Submit a pickup request or request a quote to see your activity here.</p>
+            </div>
+        `;
+        updateOverview([]);
+        renderDashboardAnalytics();
+        return;
+    }
+
+    renderDashboardRequests(requests);
     updateOverview(requests);
     renderDashboardAnalytics();
 }
