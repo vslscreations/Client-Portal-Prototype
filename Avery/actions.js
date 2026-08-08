@@ -82,7 +82,19 @@ const AveryActions = {
 // Make Avery actions available everywhere
 window.AveryActions = AveryActions;
 
-AveryActions.startPickupTask = function(){
+AveryActions.startPickupTask = function(forceNew){
+
+    const existingTask = AveryMemory.get("currentTask", null);
+    const shouldReset = forceNew === true || AveryConversation.getData("forceNewRoute") === true;
+    const hasExistingValues = existingTask && existingTask.fields && Object.keys(existingTask.fields).some(function(key){
+        const value = existingTask.fields[key];
+        return value !== "" && value !== null && value !== undefined;
+    });
+
+    if(!shouldReset && existingTask && hasExistingValues){
+        console.log("✅ Reusing existing pickup task", existingTask);
+        return existingTask;
+    }
 
     const task = AveryTaskModel.createPickupTask();
 

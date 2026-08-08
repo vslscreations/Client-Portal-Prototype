@@ -13,11 +13,33 @@ const AveryWorkflowEngine = {
         }
 
 
+        const forceNewRoute = AveryConversation.getData("forceNewRoute") === true;
+
         AveryConversation.setIntent(workflowName);
+        AveryConversation.saveData("forceNewRoute", forceNewRoute);
 
         if(workflowName === "START_PICKUP"){
 
-            AveryActions.startPickupTask();
+            AveryActions.startPickupTask(forceNewRoute);
+
+            const isPickupPage = window.location.pathname.includes('/pickup.html') || window.location.pathname.endsWith('/pickup.html');
+            const handoffMessageFlag = AveryConversation.getData("showAutoPopulatedRouteMessage") || AveryMemory.get("showAutoPopulatedRouteMessage", false);
+            if(isPickupPage && handoffMessageFlag){
+                AveryConversation.saveData("showAutoPopulatedRouteMessage", null);
+                AveryMemory.remove("showAutoPopulatedRouteMessage");
+                AveryConversation.setStep(1);
+
+                const isFreshRoute = AveryConversation.getData("forceNewRoute") === true || AveryConversation.getData("freshRouteHandoff") === true || AveryMemory.get("freshRouteHandoff", false) === true;
+                return isFreshRoute
+                    ? "Your pickup form is now ready. The next time you submit a request, we’ll auto-fill the fields to save you time."
+                    : "Your form has been auto-populated to save you time. Review the details and enter the time and date of your new pickup.";
+            }
+
+            if(forceNewRoute){
+                AveryConversation.saveData("forceNewRoute", null);
+                AveryConversation.setStep(1);
+                return workflow[1].message;
+            }
 
             const profile = AveryMemory && typeof AveryMemory.getCustomerProfile === "function"
                 ? AveryMemory.getCustomerProfile()
@@ -31,11 +53,15 @@ const AveryWorkflowEngine = {
                     ? AveryMemory.getSavedRoutes()
                     : [];
 
-                let response = `Welcome back${profile.firstName ? ` ${profile.firstName}` : ""}! I found your${profile.companyName ? ` ${profile.companyName}` : " account"} account.`;
+                const accountName = profile.companyName ? ` ${profile.companyName}` : "";
+                const isPickupPage = window.location.pathname.includes('/pickup.html') || window.location.pathname.endsWith('/pickup.html');
+                let response = `Welcome back${profile.firstName ? ` ${profile.firstName}` : ""}! I found your${accountName} account.`;
 
                 if(savedRoutes.length){
                     response += `<br><br>I also found ${savedRoutes.length} saved route${savedRoutes.length > 1 ? "s" : ""} for you.`;
-                    response += `<br><br>Reply with "use saved route" if you'd like me to apply it, or type anything else if you'd rather start fresh.`;
+                    response += isPickupPage
+                        ? `<br><br><button class="avery-inline-action" type="button" onclick="window.handleReturningCustomerChoice('useRoute')">Use saved route</button>`
+                        : `<br><br>Reply with "use saved route" or let me know if you want to start a new route.`;
                 } else {
                     response += `<br><br>I can help you start a fresh pickup request.`;
                 }
@@ -68,7 +94,8 @@ const AveryWorkflowEngine = {
         task.fields = task.fields || {};
         task.fields.pickupAddress = route.pickupAddress || "";
         task.fields.deliveryAddress = route.deliveryAddress || "";
-        task.fields.serviceLevel = route.deliveryType || "";
+        task.fields.deliveryType = route.deliveryType || task.fields.deliveryType || task.fields.serviceLevel || "";
+        task.fields.serviceLevel = route.deliveryType || task.fields.serviceLevel || task.fields.deliveryType || "";
         task.fields.companyName = route.companyName || route.nickname || "";
         task.fields.businessName = route.companyName || route.nickname || "";
         task.fields.fullName = (AveryMemory.getCustomerProfile ? AveryMemory.getCustomerProfile().firstName || "" : "") + ((AveryMemory.getCustomerProfile ? AveryMemory.getCustomerProfile().lastName || "" : "") ? ` ${AveryMemory.getCustomerProfile().lastName || ""}` : "");
@@ -109,11 +136,11 @@ const AveryWorkflowEngine = {
         });
         const stepText = document.getElementById("progressText");
         if(stepText){
-            stepText.innerText = "Step 2 of 4";
+            stepText.innerText = "Step 1 of 4";
         }
         const progressFill = document.getElementById("progressFill");
         if(progressFill){
-            progressFill.style.width = "50%";
+            progressFill.style.width = "25%";
         }
 
         return task;
@@ -133,7 +160,11 @@ const AveryWorkflowEngine = {
 
             this.applyRouteToPickup(latestRoute);
             AveryConversation.saveData("pendingPickupPrompt", "pickupDatePickupTimeNotes");
-            return "Great, I’ll use your most recent route. I’ll keep this quick and ask only for the pickup date, pickup time, and any additional notes.";
+            AveryConversation.saveData("showAutoPopulatedRouteMessage", true);
+            AveryConversation.saveData("freshRouteHandoff", false);
+            AveryMemory.set("showAutoPopulatedRouteMessage", true);
+            AveryMemory.remove("freshRouteHandoff");
+            return "I have auto-populated the form to match your saved route. Verify it’s all correct, then enter the time and date of your new request.";
         }
 
         AveryConversation.saveData("pendingPickupPrompt", "pickupDatePickupTimeNotes");
@@ -167,6 +198,10 @@ const AveryWorkflowEngine = {
                 })[0];
                 this.applyRouteToPickup(latestRoute);
                 AveryConversation.saveData("pendingPickupPrompt", "pickupDatePickupTimeNotes");
+                AveryConversation.saveData("showAutoPopulatedRouteMessage", true);
+                AveryConversation.saveData("freshRouteHandoff", false);
+                AveryMemory.set("showAutoPopulatedRouteMessage", true);
+                AveryMemory.remove("freshRouteHandoff");
 
                 if(window.AveryActions && typeof window.AveryActions.openPickup === "function"){
                     window.AveryActions.openPickup();
@@ -174,7 +209,7 @@ const AveryWorkflowEngine = {
                     window.location.href = window.resolvePortalPath ? window.resolvePortalPath("pages/pickup.html") : "pages/pickup.html";
                 }
 
-                return "Opening your pickup wizard...";
+                return "I have auto-populated the form to match your saved route. Verify it’s all correct, then enter the time and date of your new request.";
             }
         }
 
@@ -211,6 +246,43 @@ if(currentQuestion){
     }
 
 }
+
+        if(intent === "START_PICKUP" && step === 2 && typeof message === "string"){
+            const currentQuestion = workflow[step];
+            if(currentQuestion && currentQuestion.field === "companyName"){
+                AveryConversation.setStep(4);
+                AveryConversation.saveData("pendingPickupPrompt", "pickupDatePickupTimeNotes");
+                AveryConversation.saveData("showAutoPopulatedRouteMessage", true);
+                AveryMemory.set("showAutoPopulatedRouteMessage", true);
+
+                const isFreshRoute = AveryConversation.getData("forceNewRoute") === true || AveryConversation.getData("freshRouteHandoff") === true || AveryMemory.get("freshRouteHandoff", false) === true;
+                if(!isFreshRoute){
+                    AveryConversation.saveData("freshRouteHandoff", true);
+                    AveryMemory.set("freshRouteHandoff", true);
+                }
+
+                const handoffMessage = isFreshRoute || AveryConversation.getData("freshRouteHandoff") === true || AveryMemory.get("freshRouteHandoff", false) === true
+                    ? "Your pickup form is now ready. The next time you submit a request, we’ll auto-fill the fields to save you time."
+                    : "Your form has been auto-populated to save you time. Review the details and enter the time and date of your new pickup.";
+
+                setTimeout(function(){
+                    if(window.AveryActions && typeof window.AveryActions.openPickup === "function"){
+                        window.AveryActions.openPickup();
+                    } else {
+                        window.location.href = window.resolvePortalPath ? window.resolvePortalPath("pages/pickup.html") : "pages/pickup.html";
+                    }
+                }, 1000);
+
+                return `
+                    <div class="avery-handoff">
+                        <div class="avery-handoff-dots" aria-hidden="true">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <div>${handoffMessage}</div>
+                    </div>
+                `;
+            }
+        }
 
         const nextStep = step + 1;
 

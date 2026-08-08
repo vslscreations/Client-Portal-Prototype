@@ -161,18 +161,34 @@ function submitRequest(){
     if(confirmationContainer){
         const routeUrl = buildGoogleMapsUrl(request.delivery.pickupAddress, request.delivery.deliveryAddress);
         confirmationContainer.innerHTML = `
-            <h2>✅ Pickup Request Submitted</h2>
-            <p><strong>Tracking Number:</strong><br>${request.trackingId}</p>
-            <p><strong>Status:</strong><br>⏳ Awaiting Dispatch</p>
-            <p>Your pickup request has been received.<br>A DasherLab dispatcher will review your request shortly.</p>
-            <p><strong>Pickup Address:</strong><br>${request.delivery.pickupAddress}</p>
-            <p><strong>Delivery Address:</strong><br>${request.delivery.deliveryAddress}</p>
-            <p>
-                ${routeUrl ? `<a href="${routeUrl}" target="_blank" rel="noopener">🗺 View Route in Google Maps</a>` : '🗺 Route link unavailable until both addresses are provided.'}
-            </p>
-            <p><a href="${resolvePortalPath('pages/tracking-status.html')}" target="_self">View Tracking Status</a></p>
-            <div class="button-row">
-                <button class="primary-button" type="button" onclick="window.location.href = resolvePortalPath('index.html')">🏠 Return Home</button>
+            <div class="confirmation-shell">
+                <div class="confirmation-badge">Request received</div>
+                <h2>Pickup request submitted</h2>
+                <p class="confirmation-copy">Your request has been registered and queued for dispatcher review.</p>
+                <div class="confirmation-grid">
+                    <div>
+                        <p class="confirmation-label">Tracking number</p>
+                        <p class="confirmation-value">${request.trackingId}</p>
+                    </div>
+                    <div>
+                        <p class="confirmation-label">Status</p>
+                        <p class="confirmation-value">Awaiting dispatch</p>
+                    </div>
+                </div>
+                <div class="confirmation-address-block">
+                    <p class="confirmation-label">Pickup address</p>
+                    <p class="confirmation-value">${request.delivery.pickupAddress}</p>
+                </div>
+                <div class="confirmation-address-block">
+                    <p class="confirmation-label">Delivery address</p>
+                    <p class="confirmation-value">${request.delivery.deliveryAddress}</p>
+                </div>
+                <p class="confirmation-link">
+                    ${routeUrl ? `<a href="${routeUrl}" target="_blank" rel="noopener">View route in Google Maps</a>` : 'Route link unavailable until both addresses are provided.'}
+                </p>
+                <div class="button-row">
+                    <button class="primary-button" type="button" onclick="window.location.href = resolvePortalPath('index.html')">Return Home</button>
+                </div>
             </div>
         `;
 

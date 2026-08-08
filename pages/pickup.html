@@ -16,12 +16,29 @@
     <div class="menu-button" onclick="toggleMenu()">☰</div>
 </header>
 
-<div class="side-menu" id="sideMenu">
-    <button class="close-menu" onclick="toggleMenu()">✕</button>
-    <a href="../index.html">Home</a>
-    <a href="../dashboard.html">Owner's Dashboard</a>
-    <a href="quote.html">Request Quote</a>
-    <a href="contact.html">Contact Customer Service</a>
+<div class="side-menu" id="sideMenu" aria-label="Primary navigation">
+    <div class="side-menu-panel">
+        <div class="side-menu-header">
+            <div>
+                <p class="menu-section-title">Navigation</p>
+                <div class="side-menu-brand">DasherLab</div>
+            </div>
+            <button class="close-menu" type="button" onclick="toggleMenu()" aria-label="Close menu">✕</button>
+        </div>
+
+        <div class="menu-group">
+            <p class="menu-section-title">Owner</p>
+            <a href="#" onclick="goTo('dashboard.html'); toggleMenu(); return false;">Owner's Dashboard</a>
+        </div>
+
+        <div class="menu-group">
+            <p class="menu-section-title">Client Portal</p>
+            <a href="#" onclick="goTo('index.html'); toggleMenu(); return false;">Home</a>
+            <a href="#" onclick="goTo('pickup.html'); toggleMenu(); return false;">Request Appointment</a>
+            <a href="#" onclick="goTo('quote.html'); toggleMenu(); return false;">Request Quote</a>
+            <a href="#" onclick="goTo('contact.html'); toggleMenu(); return false;">Contact Customer Service</a>
+        </div>
+    </div>
 </div>
 
 <div class="page-header">
@@ -33,14 +50,14 @@
         <img src="../assets/images/avery.png" class="avery-small-avatar">
         <div>
             <strong>Avery</strong><br>
-            <span>Virtual Administrative Assistant</span><br>
+            <span>Virtual Dispatch Coordinator</span><br>
             <small>Powered by EskoDSK AI</small>
         </div>
     </div>
 
     <div class="avery-bubble">
         <p id="averyPrompt">
-            I'll help you schedule your pickup. I’ve already filled in the basics, and I’m ready for the rest of the details below.
+            I’ll help coordinate your pickup. I’ve already filled in the basics, and I’m ready for the rest of the details below.
         </p>
     </div>
 </div>

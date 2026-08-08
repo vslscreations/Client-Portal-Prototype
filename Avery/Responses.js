@@ -1,7 +1,7 @@
 const AveryResponses = {
 
     START_PICKUP: `
-        I'd be happy to help schedule your pickup.
+        I'd be happy to help coordinate your dispatch.
 
         <br><br>
 
@@ -48,7 +48,7 @@ const AveryResponses = {
     `,
 
     OWNER_WELCOME: `
-        I can help you review daily operations.
+        I can help you review dispatch operations.
 
         <br><br>
 

@@ -390,18 +390,28 @@ setTimeout(()=>{
 
     let intent = detectIntent(text);
 
+    const wantsNewRoute = lowerText === "new" ||
+        lowerText.includes("new route") ||
+        lowerText.includes("start a new route") ||
+        lowerText.includes("start route") ||
+        (lowerText.includes("new") && lowerText.includes("route"));
+
     const isWorkflowStartMessage = lowerText.includes("appointment") ||
         lowerText.includes("schedule") ||
         lowerText.includes("book") ||
         lowerText.includes("meeting") ||
         lowerText.includes("pickup") ||
         lowerText.includes("package") ||
-        lowerText.includes("courier");
+        lowerText.includes("courier") ||
+        lowerText.includes("new route") ||
+        lowerText.includes("start a new route") ||
+        lowerText.includes("start route");
 
 if(
     AveryConversation.currentIntent === "START_PICKUP" &&
     AveryConversation.currentStep >= 1 &&
-    !isWorkflowStartMessage
+    !isWorkflowStartMessage &&
+    !wantsNewRoute
 ){
 
     response = AveryWorkflowEngine.handleResponse(text);
@@ -413,9 +423,15 @@ if(
     }
 
 }
-else if (isWorkflowStartMessage){
+else if (isWorkflowStartMessage || wantsNewRoute){
 
-response = AveryWorkflowEngine.start("START_PICKUP");
+    if(wantsNewRoute){
+        AveryConversation.saveData("forceNewRoute", true);
+        AveryConversation.saveData("freshRouteHandoff", true);
+        AveryMemory.set("freshRouteHandoff", true);
+    }
+
+    response = AveryWorkflowEngine.start("START_PICKUP");
 }
     else if(lowerText.includes("quote")
     || lowerText.includes("price")

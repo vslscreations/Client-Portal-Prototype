@@ -2,6 +2,7 @@ function submitContact(){
     const contactRequest = {
         type: "Human Follow-Up",
         name: document.getElementById("contactName").value,
+        phone: document.getElementById("contactPhone").value,
         email: document.getElementById("contactEmail").value,
         message: document.getElementById("contactMessage").value,
         status: "Needs Review",

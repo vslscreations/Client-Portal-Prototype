@@ -16,9 +16,29 @@
     <div class="menu-button" onclick="toggleMenu()">☰</div>
 </header>
 
-<div class="side-menu" id="sideMenu">
-    <button class="close-menu" onclick="toggleMenu()">✕</button>
-    <a href="index.html">Home</a>
+<div class="side-menu" id="sideMenu" aria-label="Primary navigation">
+    <div class="side-menu-panel">
+        <div class="side-menu-header">
+            <div>
+                <p class="menu-section-title">Navigation</p>
+                <div class="side-menu-brand">DasherLab</div>
+            </div>
+            <button class="close-menu" type="button" onclick="toggleMenu()" aria-label="Close menu">✕</button>
+        </div>
+
+        <div class="menu-group">
+            <p class="menu-section-title">Owner</p>
+            <a href="#" onclick="goTo('dashboard.html'); toggleMenu(); return false;">Owner's Dashboard</a>
+        </div>
+
+        <div class="menu-group">
+            <p class="menu-section-title">Client Portal</p>
+            <a href="#" onclick="goTo('index.html'); toggleMenu(); return false;">Home</a>
+            <a href="#" onclick="goTo('pickup.html'); toggleMenu(); return false;">Request Appointment</a>
+            <a href="#" onclick="goTo('quote.html'); toggleMenu(); return false;">Request Quote</a>
+            <a href="#" onclick="goTo('contact.html'); toggleMenu(); return false;">Contact Customer Service</a>
+        </div>
+    </div>
 </div>
 
 <div class="page-header">
@@ -31,14 +51,15 @@
         <img src="assets/images/avery.png" class="owner-avery-avatar" alt="Avery avatar" />
         <div>
             <strong>Avery</strong>
-            <p>Virtual Business Operations Assistant</p>
+            <p>Virtual Dispatch Coordinator</p>
+            <small>Powered by EskoDSK AI</small>
         </div>
     </div>
 
     <div id="ownerAveryMessages" class="owner-avery-messages" role="log" aria-live="polite">
         <div class="message avery-message">
             <strong>Avery:</strong>
-            <div>Ask about today's schedule, business performance, or recent requests.</div>
+            <div>Ask about today's dispatch schedule, active requests, or delivery priorities.</div>
         </div>
     </div>
 
@@ -98,13 +119,6 @@
     </div>
 
     <div class="dashboard-card">
-        <h2>🤖 Avery Insights</h2>
-        <div id="averyInsightsList" class="activity-list">
-            <p>Continue processing requests and Avery will learn your business patterns.</p>
-        </div>
-    </div>
-
-    <div class="dashboard-card">
         <h2>📋 Customer Requests</h2>
         <div class="request-tabs" role="tablist" aria-label="Customer request filters">
             <button type="button" class="request-tab active" data-filter="active" role="tab" aria-selected="true">Awaiting Dispatch + Active</button>
@@ -116,15 +130,13 @@
     </div>
 
     <div class="dashboard-card">
-        <h2>🤖 Avery Activity</h2>
-        <div class="activity-list">
-            <div class="activity-item">
-                <span>✅</span>
-                <p>Avery is monitoring current requests and priorities.</p>
-                <small>Now</small>
-            </div>
+        <h2>🤖 Avery Insights</h2>
+        <div id="averyInsightsList" class="activity-list">
+            <p>Continue processing requests and Avery will learn your business patterns.</p>
         </div>
     </div>
+
+
 </main>
 
 </div>

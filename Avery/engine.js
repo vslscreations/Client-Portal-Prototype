@@ -5,7 +5,10 @@ function detectIntent(message) {
     if (
         text.includes("pickup") ||
         text.includes("package") ||
-        text.includes("courier")
+        text.includes("courier") ||
+        text.includes("new route") ||
+        text.includes("start a new route") ||
+        text.includes("start route")
     ) {
         return AveryIntents.START_PICKUP;
     }

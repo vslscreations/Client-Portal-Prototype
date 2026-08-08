@@ -5,7 +5,7 @@ START_PICKUP: {
 
     1: {
         message:
-        "Let's get your pickup scheduled. First, may I have your first and last name?",
+        "Let's get your pickup scheduled. First, may I have your full name?",
         field:
         "customerName"
     },
@@ -13,17 +13,17 @@ START_PICKUP: {
 
     2: {
         message:
-        "What type of delivery do you need? STAT, Rush, Same-Day, or Scheduled?",
+        "What business are you with?",
         field:
-        "serviceLevel"
+        "companyName"
     },
 
 
     3: {
         message:
-        "What business are you with?",
+        "Perfect. I have the business details I need, and I’ll carry the rest of the request forward for you.",
         field:
-        "companyName"
+        null
     },
 
 
