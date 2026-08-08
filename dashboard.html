@@ -26,22 +26,27 @@
     <p>Monitor request volume, customer activity, and Avery insights in one place.</p>
 </div>
 
-<div class="avery-card">
-    <div class="avery-header">
-        <img src="assets/images/avery.png" class="avery-small-avatar">
+<section class="dashboard-owner-chat-card" aria-label="Owner Avery chat">
+    <div class="owner-avery-header">
+        <img src="assets/images/avery.png" class="owner-avery-avatar" alt="Avery avatar" />
         <div>
             <strong>Avery</strong>
-            <br>
-            <span>AI Business Assistant</span>
-            <br>
-            <small>Powered by EskoDSK AI</small>
+            <p>Virtual Business Operations Assistant</p>
         </div>
     </div>
 
-    <div class="avery-bubble">
-        <p>Welcome back! I’m here to help you run daily operations, spot trends, and keep customer requests flowing smoothly.</p>
+    <div id="ownerAveryMessages" class="owner-avery-messages" role="log" aria-live="polite">
+        <div class="message avery-message">
+            <strong>Avery:</strong>
+            <div>Ask about today's schedule, business performance, or recent requests.</div>
+        </div>
     </div>
-</div>
+
+    <div class="owner-avery-input-row">
+        <input id="ownerAveryInput" type="text" placeholder="Ask about today's schedule or business health" />
+        <button id="ownerAverySend" type="button">Send</button>
+    </div>
+</section>
 
 <main class="dashboard-container">
     <div class="dashboard-card">
@@ -121,6 +126,9 @@
 </div>
 
 <script src="Avery/dashboardAnalytics.js"></script>
+<script src="Avery/Responses.js"></script>
+<script src="Avery/scheduleInsights.js"></script>
+<script src="Avery/tools.js"></script>
 <script src="js/navigation.js"></script>
 <script src="js/script.js"></script>
 

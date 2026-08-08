@@ -68,15 +68,15 @@
       <input type="text" id="quoteDeliveryLocation" placeholder="Delivery address or facility" required>
 
       <label>Estimated Mileage</label>
-      <input type="number" id="quoteMileage" min="1" placeholder="Approximate miles" required>
+      <input type="number" id="quoteMileage" min="0" step="0.25" placeholder="Approximate miles" required>
 
       <label>Delivery Priority</label>
       <select id="quotePriority" required>
         <option value="">Select a priority level</option>
-        <option>Standard</option>
-        <option>High Priority</option>
-        <option>ASAP</option>
-        <option>STAT</option>
+        <option value="Standard">Standard</option>
+        <option value="Rush">Rush</option>
+        <option value="After-hours">After-hours</option>
+        <option value="STAT">STAT</option>
       </select>
 
       <button class="secondary-button" onclick="nextQuoteStep(1)">← Back</button>
@@ -98,11 +98,15 @@
     <div class="form-card hidden" id="quoteStep4">
       <h2>Avery's Estimate</h2>
       <div class="review-box">
-        <h3>Estimated Investment</h3>
+        <h3>Estimated Delivery Cost</h3>
         <h1 id="generatedQuote">$0</h1>
+        <p id="quoteAveryMessage" class="quote-summary-text"></p>
+        <div id="quoteBreakdown" class="quote-breakdown"></div>
         <p><strong>Customer:</strong> <span id="quoteResultCustomer"></span></p>
         <p><strong>Business:</strong> <span id="quoteResultBusiness"></span></p>
         <p><strong>Recommended Service:</strong> <span id="quoteResultService"></span></p>
+        <p><strong>Pickup:</strong> <span id="quoteResultPickup"></span></p>
+        <p><strong>Delivery:</strong> <span id="quoteResultDelivery"></span></p>
         <p><strong>Estimated Mileage:</strong> <span id="quoteResultMileage"></span></p>
         <p><strong>Priority:</strong> <span id="quoteResultPriority"></span></p>
         <p><strong>Requested Date:</strong> <span id="quoteResultDate"></span></p>
@@ -113,9 +117,12 @@
   </div>
 
   <script src="../js/navigation.js"></script>
+  <script src="../Avery/memory.js"></script>
+  <script src="../Avery/quotePricing.js"></script>
   <script src="../js/quote.js"></script>
   <script src="../Avery/actions.js"></script>
   <script src="../Avery/knowledge.js"></script>
+  <script src="../Avery/tools.js"></script>
   <script src="../js/script.js"></script>
 </body>
 </html>

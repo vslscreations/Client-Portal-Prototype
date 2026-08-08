@@ -9,18 +9,27 @@ function escapeHtml(value){
 
 function getOwnerAveryResponse(text){
     const lowerText = (text || "").toLowerCase();
+    const tools = window.AveryTools;
     const analytics = window.AveryAnalytics;
-    const today = analytics && typeof analytics.getTodayOperations === "function"
-        ? analytics.getTodayOperations()
-        : null;
-    const overview = analytics && typeof analytics.getBusinessOverview === "function"
-        ? analytics.getBusinessOverview()
-        : null;
-    const requests = JSON.parse(localStorage.getItem("requests") || "[]");
+    const today = tools && typeof tools.getTodaySchedule === "function"
+        ? tools.getTodaySchedule()
+        : (analytics && typeof analytics.getTodayOperations === "function"
+            ? analytics.getTodayOperations()
+            : null);
+    const overview = tools && typeof tools.getBusinessOverview === "function"
+        ? tools.getBusinessOverview()
+        : (analytics && typeof analytics.getBusinessOverview === "function"
+            ? analytics.getBusinessOverview()
+            : null);
+    const requests = tools && typeof tools.getRecentRequests === "function"
+        ? tools.getRecentRequests(5)
+        : JSON.parse(localStorage.getItem("requests") || "[]");
 
     if (lowerText.includes("today's schedule") || lowerText.includes("todays schedule") || lowerText.includes("schedule today") || lowerText.includes("what's today's schedule") || lowerText.includes("what is today's schedule")) {
         if (!today) {
-            return "I don't have enough operational data yet to summarize today's schedule.";
+            return (tools && typeof tools.buildNotEnoughInformationMessage === "function"
+                ? tools.buildNotEnoughInformationMessage("today's schedule")
+                : "I don't have enough operational data yet to summarize today's schedule.");
         }
         return `
             <strong>Today's schedule</strong><br>
@@ -32,7 +41,9 @@ function getOwnerAveryResponse(text){
 
     if (lowerText.includes("how is business doing") || lowerText.includes("business doing") || lowerText.includes("business health") || lowerText.includes("how is the business")) {
         if (!overview) {
-            return "I don't have enough business data yet to summarize performance.";
+            return (tools && typeof tools.buildNotEnoughInformationMessage === "function"
+                ? tools.buildNotEnoughInformationMessage("business performance")
+                : "I don't have enough business data yet to summarize performance.");
         }
         return `
             <strong>Business snapshot</strong><br>
@@ -81,9 +92,11 @@ function getOwnerAveryResponse(text){
 
     if (lowerText.includes("recent requests") || lowerText.includes("show recent requests") || lowerText.includes("latest requests")) {
         if (!requests.length) {
-            return "There are no recent requests to display yet.";
+            return (tools && typeof tools.buildNotEnoughInformationMessage === "function"
+                ? tools.buildNotEnoughInformationMessage("recent requests")
+                : "There are no recent requests to display yet.");
         }
-        const recentRequests = requests.slice(-5).reverse();
+        const recentRequests = Array.isArray(requests) ? requests.slice(-5).reverse() : [];
         return `
             <strong>Recent requests</strong><br>
             ${recentRequests.map(function (request) {
@@ -100,6 +113,60 @@ function getOwnerAveryResponse(text){
     return AveryResponses.OWNER_HELP || "I can summarize today's schedule, business performance, top customers, route usage, and recent requests.";
 }
 
+function getOwnerAverySuggestionPrompts(){
+    return [
+        { label: "Today's schedule", prompt: "What's today's schedule?" },
+        { label: "Business health", prompt: "How is business doing?" },
+        { label: "Recent requests", prompt: "Show recent requests" }
+    ];
+}
+
+function appendOwnerAverySuggestionRow(messageElement){
+    if (!messageElement) {
+        return;
+    }
+
+    if (messageElement.querySelector(".owner-avery-suggestions")) {
+        return;
+    }
+
+    const suggestions = document.createElement("div");
+    suggestions.className = "owner-avery-suggestions";
+    suggestions.innerHTML = getOwnerAverySuggestionPrompts().map(function (item) {
+        return `<a href="#" class="owner-avery-suggestion" data-prompt="${escapeHtml(item.prompt)}">${escapeHtml(item.label)}</a>`;
+    }).join("");
+
+    messageElement.appendChild(suggestions);
+}
+
+function populateOwnerAveryInput(text){
+    const input = document.getElementById("ownerAveryInput");
+    if (!input) {
+        return;
+    }
+
+    input.value = text || "";
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+}
+
+function attachOwnerAverySuggestionHandlers(messages){
+    if (!messages || messages.dataset.suggestionsBound === "true") {
+        return;
+    }
+
+    messages.dataset.suggestionsBound = "true";
+    messages.addEventListener("click", function (event) {
+        const link = event.target.closest(".owner-avery-suggestion");
+        if (!link) {
+            return;
+        }
+
+        event.preventDefault();
+        populateOwnerAveryInput(link.getAttribute("data-prompt") || link.textContent);
+    });
+}
+
 function appendOwnerAveryMessage(role, content){
     const messages = document.getElementById("ownerAveryMessages");
     if (!messages) {
@@ -108,13 +175,14 @@ function appendOwnerAveryMessage(role, content){
 
     const wrapperClass = role === "user" ? "user-message" : "avery-message";
     const label = role === "user" ? "You" : "Avery";
+    const message = document.createElement("div");
+    message.className = `message ${wrapperClass}`;
+    message.innerHTML = `<strong>${escapeHtml(label)}:</strong><div>${content}</div>`;
+    messages.appendChild(message);
 
-    messages.insertAdjacentHTML("beforeend", `
-        <div class="message ${wrapperClass}">
-            <strong>${escapeHtml(label)}:</strong>
-            <div>${content}</div>
-        </div>
-    `);
+    if (role === "avery") {
+        appendOwnerAverySuggestionRow(message);
+    }
 
     messages.scrollTop = messages.scrollHeight;
 }
@@ -149,6 +217,75 @@ function sendOwnerAveryMessage(){
     }, 700);
 }
 
+function buildOwnerProactiveInsight(){
+    const tools = window.AveryTools;
+    const analytics = window.AveryAnalytics;
+    const today = tools && typeof tools.getTodaySchedule === "function"
+        ? tools.getTodaySchedule()
+        : (analytics && typeof analytics.getTodayOperations === "function"
+            ? analytics.getTodayOperations()
+            : null);
+    const overview = tools && typeof tools.getBusinessOverview === "function"
+        ? tools.getBusinessOverview()
+        : (analytics && typeof analytics.getBusinessOverview === "function"
+            ? analytics.getBusinessOverview()
+            : null);
+    const requests = tools && typeof tools.getRecentRequests === "function"
+        ? tools.getRecentRequests(5)
+        : JSON.parse(localStorage.getItem("requests") || "[]");
+
+    if (!today && !overview && !requests.length) {
+        return (tools && typeof tools.buildNotEnoughInformationMessage === "function"
+            ? tools.buildNotEnoughInformationMessage("current operations")
+            : "Good morning. I’m ready to help you manage your operations. Once requests start coming in, I’ll provide insights and recommendations here.");
+    }
+
+    const conflictInsight = window.DasherLabScheduleInsights && typeof window.DasherLabScheduleInsights.getScheduleInsights === "function"
+        ? window.DasherLabScheduleInsights.getScheduleInsights()
+        : null;
+
+    if (conflictInsight && conflictInsight.type === "scheduling_conflict" && conflictInsight.affectedRequests && conflictInsight.affectedRequests.length > 0) {
+        return conflictInsight.message;
+    }
+
+    const pickupCount = today && typeof today.pickupsScheduledToday === "number"
+        ? today.pickupsScheduledToday
+        : 0;
+    const pendingCount = today && typeof today.pendingRequests === "number"
+        ? today.pendingRequests
+        : 0;
+    const topCustomer = overview && overview.topCustomer
+        ? overview.topCustomer
+        : "";
+
+    if (pickupCount > 0) {
+        return `Good morning. I reviewed today's operations. You have ${pickupCount} pickup${pickupCount === 1 ? "" : "s"} scheduled today. Your schedule looks consistent, and I can help you review today's requests if needed.`;
+    }
+
+    if (topCustomer) {
+        return `${topCustomer} has been one of your most active customers recently. You may want to consider offering them a recurring route package.`;
+    }
+
+    if (pendingCount > 0) {
+        return `You currently have ${pendingCount} request${pendingCount === 1 ? "" : "s"} waiting for review. I can help you prioritize them.`;
+    }
+
+    return "Good morning. I’m ready to help you manage your operations. Once requests start coming in, I’ll provide insights and recommendations here.";
+}
+
+function displayOwnerMessage(content){
+    const messages = document.getElementById("ownerAveryMessages");
+    if (!messages) {
+        return;
+    }
+
+    const message = document.createElement("div");
+    message.className = "message avery-message";
+    message.innerHTML = `<strong>Avery:</strong><div>${content}</div>`;
+    messages.appendChild(message);
+    messages.scrollTop = messages.scrollHeight;
+}
+
 function initOwnerAveryDashboard(){
     const input = document.getElementById("ownerAveryInput");
     const button = document.getElementById("ownerAverySend");
@@ -170,12 +307,26 @@ function initOwnerAveryDashboard(){
             sendOwnerAveryMessage();
         }
     });
+    attachOwnerAverySuggestionHandlers(messages);
 
-    const initialMessage = document.createElement("div");
-    initialMessage.className = "message avery-message";
-    initialMessage.innerHTML = `<strong>Avery:</strong><div>${AveryResponses.OWNER_WELCOME || "I can help with your daily operations."}</div>`;
-    messages.appendChild(initialMessage);
+    const existingGreeting = messages.querySelector(".message.avery-message");
+    if (existingGreeting) {
+        appendOwnerAverySuggestionRow(existingGreeting);
+    } else {
+        const initialMessage = document.createElement("div");
+        initialMessage.className = "message avery-message";
+        initialMessage.innerHTML = `<strong>Avery:</strong><div>${AveryResponses.OWNER_WELCOME || "I can help with your daily operations."}</div>`;
+        messages.appendChild(initialMessage);
+        appendOwnerAverySuggestionRow(initialMessage);
+    }
     messages.scrollTop = messages.scrollHeight;
+
+    setTimeout(function () {
+        const proactiveInsight = buildOwnerProactiveInsight();
+        if (proactiveInsight) {
+            displayOwnerMessage(proactiveInsight);
+        }
+    }, 250);
 }
 
 function sendMessage(){
@@ -491,8 +642,45 @@ function getRequestPriority(request){
     return request && request.priority ? request.priority : ((request && request.delivery && request.delivery.serviceLevel) || "Standard");
 }
 
+function normalizeRequestStatus(status){
+    if (!status) {
+        return "Awaiting Dispatch";
+    }
+
+    const normalized = String(status).trim().toLowerCase();
+
+    if (normalized === "completed" || normalized.includes("complete")) {
+        return "Completed";
+    }
+
+    if (normalized === "active" || normalized.includes("active") || normalized === "accepted" || normalized === "in progress" || normalized === "assigned" || normalized === "dispatched") {
+        return "Active";
+    }
+
+    return "Awaiting Dispatch";
+}
+
 function getRequestStatus(request){
-    return request && request.status ? request.status : "Awaiting Dispatch";
+    return normalizeRequestStatus(request && request.status ? request.status : "Awaiting Dispatch");
+}
+
+function getRequestStatusClass(status){
+    return status === "Completed" ? "completed" : status === "Active" ? "active" : "";
+}
+
+function updateRequestStatus(index, status){
+    const requests = JSON.parse(localStorage.getItem("requests") || "[]");
+    if (!requests[index]) {
+        return;
+    }
+
+    requests[index].status = status;
+    localStorage.setItem("requests", JSON.stringify(requests));
+    loadDashboard();
+}
+
+function updateRequestStatusFromSelect(index, status){
+    updateRequestStatus(index, status);
 }
 
 function getRequestCreatedAt(request){
@@ -628,6 +816,8 @@ function loadDashboard(){
     requestList.innerHTML = "";
 
     requests.forEach((request, index)=>{
+        const status = getRequestStatus(request);
+        const statusClass = getRequestStatusClass(status);
         const trackingId = getRequestTrackingNumber(request);
         const quoteSummary = request && request.quote ? `
             <div class="quote-summary">
@@ -643,7 +833,16 @@ function loadDashboard(){
                         <h3>${getRequestTitle(request)}</h3>
                         <p class="request-subtitle">${getRequestService(request)}</p>
                     </div>
-                    <span class="status-pill">${getRequestStatus(request)}</span>
+                    <span class="status-pill ${statusClass}">${status}</span>
+                </div>
+
+                <div class="request-status-row">
+                    <label class="request-status-label" for="requestStatus-${index}">Status</label>
+                    <select class="request-status-select ${statusClass}" id="requestStatus-${index}" onchange="updateRequestStatusFromSelect(${index}, this.value)">
+                        <option value="Awaiting Dispatch" ${status === "Awaiting Dispatch" ? "selected" : ""}>Awaiting Dispatch</option>
+                        <option value="Active" ${status === "Active" ? "selected" : ""}>Active</option>
+                        <option value="Completed" ${status === "Completed" ? "selected" : ""}>Completed</option>
+                    </select>
                 </div>
 
                 <div class="request-tracking">Tracking Number<br><strong>${trackingId}</strong></div>
@@ -684,7 +883,7 @@ function updateOverview(requests){
             pending++;
         }
 
-        if(["Accepted", "In Progress", "Assigned", "Dispatched"].includes(status)){
+        if(["Accepted", "In Progress", "Assigned", "Dispatched", "Active"].includes(status)){
             inProgress++;
             activeTasks++;
         }

@@ -48,63 +48,131 @@ function nextQuoteStep(step){
     }
 }
 
+function getSavedQuoteRouteDefaults(){
+    const savedRoutes = window.AveryMemory && typeof window.AveryMemory.getSavedRoutes === "function"
+        ? window.AveryMemory.getSavedRoutes()
+        : [];
+
+    if (!savedRoutes.length) {
+        return null;
+    }
+
+    const latestRoute = savedRoutes[savedRoutes.length - 1];
+    return {
+        pickupLocation: latestRoute.pickupAddress || "",
+        deliveryLocation: latestRoute.deliveryAddress || "",
+        serviceType: latestRoute.deliveryType || "Scheduled Route",
+        packageType: latestRoute.packageType || "",
+        customerName: latestRoute.fullName || "",
+        companyName: latestRoute.companyName || ""
+    };
+}
+
+function populateSavedQuoteDefaults(){
+    const defaults = getSavedQuoteRouteDefaults();
+    if (!defaults) {
+        return;
+    }
+
+    const pickupField = document.getElementById("quotePickupLocation");
+    const deliveryField = document.getElementById("quoteDeliveryLocation");
+    const serviceField = document.getElementById("quoteService");
+    const customerField = document.getElementById("quoteCustomerName");
+    const companyField = document.getElementById("quoteCompany");
+
+    if (pickupField && !pickupField.value) {
+        pickupField.value = defaults.pickupLocation;
+    }
+
+    if (deliveryField && !deliveryField.value) {
+        deliveryField.value = defaults.deliveryLocation;
+    }
+
+    if (serviceField && !serviceField.value) {
+        serviceField.value = defaults.serviceType;
+    }
+
+    if (customerField && !customerField.value) {
+        customerField.value = defaults.customerName;
+    }
+
+    if (companyField && !companyField.value) {
+        companyField.value = defaults.companyName;
+    }
+}
+
 function calculateQuoteEstimate(serviceType, mileage, priority){
+    if (window.DasherLabQuotePricing && typeof window.DasherLabQuotePricing.calculateQuoteEstimate === "function") {
+        return window.DasherLabQuotePricing.calculateQuoteEstimate(serviceType, mileage, priority);
+    }
+
     const mileageValue = Number(mileage) || 0;
-    let base = 35;
+    const baseFee = 35;
+    const mileageFee = mileageValue * 2.25;
+    const subtotal = baseFee + mileageFee;
+    const urgency = String(priority || "Standard").trim().toLowerCase();
+    let surchargePercent = 0;
 
-    switch(serviceType){
-        case "Same-Day Courier":
-            base = 45;
-            break;
-        case "Scheduled Route":
-            base = 65;
-            break;
-        case "Recurring Route":
-            base = 95;
-            break;
-        case "Long-Haul Transfer":
-            base = 140;
-            break;
+    if (urgency === "stat") {
+        surchargePercent = 0.75;
+    } else if (urgency === "after-hours" || urgency === "after hours") {
+        surchargePercent = 0.4;
+    } else if (urgency === "rush" || urgency === "high priority" || urgency === "asap") {
+        surchargePercent = 0.25;
     }
 
-    if(priority === "STAT" || priority === "High Priority" || priority === "ASAP"){
-        base += 20;
-    }
-
-    if(serviceType === "Recurring Route"){
-        base += 40;
-    }
-
-    if(mileageValue > 15){
-        base += Math.round((mileageValue - 15) * 1.25);
-    }
-
-    if(mileageValue > 50){
-        base += 25;
-    }
-
-    return Math.max(base, 35);
+    const surchargeAmount = subtotal * surchargePercent;
+    return {
+        baseFee: baseFee,
+        mileage: mileageValue,
+        mileageFee: mileageFee,
+        subtotal: subtotal,
+        surchargePercent: surchargePercent,
+        surchargeAmount: surchargeAmount,
+        estimatedTotal: subtotal + surchargeAmount,
+        urgencyLabel: urgency === "stat" ? "STAT" : urgency === "after-hours" || urgency === "after hours" ? "After-hours" : urgency === "rush" || urgency === "high priority" || urgency === "asap" ? "Rush" : "Standard",
+        serviceType: serviceType || "Scheduled Route"
+    };
 }
 
 function renderQuoteSummary(){
     const customerName = document.getElementById("quoteCustomerName").value.trim();
     const businessName = document.getElementById("quoteCompany").value.trim();
     const serviceType = document.getElementById("quoteService").value;
+    const pickupAddress = document.getElementById("quotePickupLocation").value.trim();
+    const deliveryAddress = document.getElementById("quoteDeliveryLocation").value.trim();
     const mileage = parseFloat(document.getElementById("quoteMileage").value) || 0;
     const priority = document.getElementById("quotePriority").value;
     const estimate = calculateQuoteEstimate(serviceType, mileage, priority);
 
-    document.getElementById("generatedQuote").innerText = `$${estimate.toFixed(0)}`;
+    document.getElementById("generatedQuote").innerText = `$${estimate.estimatedTotal.toFixed(2)}`;
     document.getElementById("quoteResultCustomer").innerText = customerName || "Customer";
     document.getElementById("quoteResultBusiness").innerText = businessName || "Business";
     document.getElementById("quoteResultService").innerText = serviceType || "Scheduled";
-    document.getElementById("quoteResultMileage").innerText = mileage > 0 ? `${mileage} miles` : "Standard service area";
+    document.getElementById("quoteResultPickup").innerText = pickupAddress || "Not provided";
+    document.getElementById("quoteResultDelivery").innerText = deliveryAddress || "Not provided";
+    document.getElementById("quoteResultMileage").innerText = mileage > 0 ? `${mileage} miles` : "Estimated mileage pending";
     document.getElementById("quoteResultNotes").innerText = document.getElementById("quoteNotes").value.trim() || "No additional notes provided.";
-    document.getElementById("quoteResultPriority").innerText = priority || "Standard";
+    document.getElementById("quoteResultPriority").innerText = estimate.urgencyLabel || priority || "Standard";
     document.getElementById("quoteResultDate").innerText = document.getElementById("quoteDate").value || "Pending review";
+
+    const breakdown = document.getElementById("quoteBreakdown");
+    if (breakdown) {
+        breakdown.innerHTML = `
+            <p><strong>Base pickup:</strong> $${estimate.baseFee.toFixed(2)}</p>
+            <p><strong>Mileage:</strong> ${estimate.mileage} miles × $${window.DasherLabQuotePricing ? window.DasherLabQuotePricing.MILEAGE_RATE.toFixed(2) : "2.25"} = $${estimate.mileageFee.toFixed(2)}</p>
+            <p><strong>${estimate.urgencyLabel === "Standard" ? "Urgency" : `${estimate.urgencyLabel} surcharge`}:</strong> ${estimate.surchargePercent > 0 ? `+${(estimate.surchargePercent * 100).toFixed(0)}%` : "No surcharge"} (${estimate.surchargeAmount > 0 ? `$${estimate.surchargeAmount.toFixed(2)}` : "$0.00"})</p>
+        `;
+    }
+
+    const averyMessage = document.getElementById("quoteAveryMessage");
+    if (averyMessage) {
+        averyMessage.innerText = `Based on the route details and delivery urgency you selected, your estimated delivery cost is $${estimate.estimatedTotal.toFixed(2)}.`;
+    }
 }
 
 function generateQuote(){
+    populateSavedQuoteDefaults();
     nextQuoteStep(4);
 }
 
@@ -133,6 +201,10 @@ function submitQuote(){
     const mileage = parseFloat(document.getElementById("quoteMileage").value) || 0;
     const priority = document.getElementById("quotePriority").value;
     const estimate = calculateQuoteEstimate(serviceType, mileage, priority);
+    const pickupAddress = document.getElementById("quotePickupLocation").value.trim();
+    const deliveryAddress = document.getElementById("quoteDeliveryLocation").value.trim();
+    const requestedDate = document.getElementById("quoteDate").value;
+    const notes = document.getElementById("quoteNotes").value.trim();
 
     const quoteRequest = {
         type: "Quote Request",
@@ -146,17 +218,25 @@ function submitQuote(){
             phoneNumber: document.getElementById("quotePhone").value.trim()
         },
         delivery: {
-            pickupAddress: document.getElementById("quotePickupLocation").value.trim(),
-            deliveryAddress: document.getElementById("quoteDeliveryLocation").value.trim(),
+            pickupAddress: pickupAddress,
+            deliveryAddress: deliveryAddress,
             serviceLevel: serviceType,
             mileage: mileage || 0,
-            notes: document.getElementById("quoteNotes").value.trim()
+            notes: notes,
+            pickupDate: requestedDate || ""
         },
         service: serviceType,
         quote: {
-            estimatedTotal: estimate,
-            timeline: "Prepared for your requested timeframe",
-            priority
+            estimatedTotal: Number(estimate.estimatedTotal.toFixed(2)),
+            baseFee: Number(estimate.baseFee.toFixed(2)),
+            mileageFee: Number(estimate.mileageFee.toFixed(2)),
+            mileage: Number(estimate.mileage.toFixed(2)),
+            surchargePercent: Number(estimate.surchargePercent.toFixed(2)),
+            surchargeAmount: Number(estimate.surchargeAmount.toFixed(2)),
+            subtotal: Number(estimate.subtotal.toFixed(2)),
+            urgency: estimate.urgencyLabel,
+            priority: priority,
+            timeline: "Prepared for your requested timeframe"
         },
         priority,
         source: "portal"
@@ -166,9 +246,29 @@ function submitQuote(){
     requests.push(quoteRequest);
     localStorage.setItem("requests", JSON.stringify(requests));
 
-    window.location.href = "../dashboard.html";
+    if (window.AveryMemory && typeof window.AveryMemory.savePickupRoute === "function") {
+        window.AveryMemory.savePickupRoute({
+            fullName: quoteRequest.customer.customerName,
+            companyName: quoteRequest.customer.companyName,
+            email: quoteRequest.customer.email,
+            phone: quoteRequest.customer.phoneNumber,
+            pickupAddress: pickupAddress,
+            deliveryAddress: deliveryAddress,
+            deliveryType: serviceType,
+            packageType: document.getElementById("quoteService").value || ""
+        }, quoteRequest.createdAt || "quote-request");
+    }
+
+    window.location.href = resolvePortalPath("index.html");
 }
 
 window.nextQuoteStep = nextQuoteStep;
 window.submitQuote = submitQuote;
 window.validateQuoteStep = validateQuoteStep;
+window.populateSavedQuoteDefaults = populateSavedQuoteDefaults;
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", populateSavedQuoteDefaults);
+} else {
+    populateSavedQuoteDefaults();
+}
