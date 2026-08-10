@@ -455,6 +455,33 @@ response = AveryResponses.CONTACT_DISPATCH;
 }
 
 else if(
+lowerText.includes("coverage area") ||
+lowerText.includes("service area") ||
+lowerText.includes("areas you serve") ||
+lowerText.includes("where do you serve") ||
+lowerText.includes("where do you operate") ||
+lowerText.includes("where do you cover")
+){
+
+response = `
+
+Our coverage area includes:
+
+<br><br>
+
+${(businessKnowledge.serviceAreas || []).map(function(area){
+    return `• ${area}`;
+}).join("<br>")}
+
+<br><br>
+
+We also support statewide custom routes for larger or recurring needs.
+
+`;
+
+}
+
+else if(
 lowerText.includes("service") ||
 lowerText.includes("offer") ||
 lowerText.includes("do you do")
@@ -462,23 +489,23 @@ lowerText.includes("do you do")
 
 response = `
 
-We help businesses with:
+We support medical and courier logistics needs with:
 
 <br><br>
 
-✔ AI customer support
+✔ Medical specimen and supply transport
 <br>
-✔ Automated scheduling
+✔ Same-day and scheduled pickup requests
 <br>
-✔ Quote generation
+✔ Route-based delivery coordination
 <br>
-✔ Lead capture
+✔ Quote requests for urgent or recurring routes
 <br>
-✔ Workflow automation
+✔ Dispatch support for business and healthcare operations
 
 <br><br>
 
-Would you like to see how Avery can help your business?
+Would you like to request a pickup or get a quote?
 
 `;
 

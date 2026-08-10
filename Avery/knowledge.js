@@ -76,6 +76,14 @@ window.businessKnowledge = {
 
     description: DasherLabKnowledge.company.description,
 
+    serviceAreas: DasherLabKnowledge.serviceAreas,
+
+    coverageArea: `
+        We currently serve: ${DasherLabKnowledge.serviceAreas.join(", ")}.
+        <br><br>
+        We also support statewide custom routes for larger or recurring needs.
+    `,
+
     pricing: `
         Local delivery starts at ${DasherLabKnowledge.pricing.localStarting}.
         Rush delivery starts at ${DasherLabKnowledge.pricing.rushStarting}.
