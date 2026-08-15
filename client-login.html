@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Login | DasherLab</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="assets/icons/app-icon.png">
+    <style>
+        .client-login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .client-login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            box-shadow: 0 14px 32px rgba(11, 47, 107, 0.12);
+            width: 100%;
+            max-width: 430px;
+            text-align: center;
+            border: 1px solid rgba(11, 47, 107, 0.08);
+        }
+
+        .client-login-card .logo {
+            margin-bottom: 28px;
+            max-width: 300px;
+        }
+
+        .client-login-card h1 {
+            color: #0b2e59;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .client-login-card p {
+            color: #666;
+            margin-bottom: 28px;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            color: #0b2e59;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color .2s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #0b2e59;
+        }
+
+        .login-button {
+            width: 100%;
+            min-height: 52px;
+            padding: 14px 16px;
+            margin-top: 8px;
+            background: linear-gradient(180deg, #123d7a 0%, #0b2e59 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+            box-shadow: 0 10px 20px rgba(11, 46, 89, 0.12);
+        }
+
+        .login-button:hover:not(:disabled) {
+            background: linear-gradient(180deg, #0d2c57 0%, #091f42 100%);
+            transform: translateY(-1px);
+        }
+
+        .login-button:disabled {
+            opacity: .7;
+            cursor: not-allowed;
+        }
+
+        .client-auth-error {
+            min-height: 1.25rem;
+            margin-top: 16px;
+            color: #b42318;
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        .client-auth-info {
+            min-height: 1.25rem;
+            margin-top: 12px;
+            color: #0b2e59;
+            font-size: 0.9rem;
+        }
+
+        .forgot-password-link {
+            display: inline-block;
+            margin-top: 14px;
+            color: #0b2e59;
+            font-size: 0.92rem;
+            text-decoration: underline;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            padding: 0;
+        }
+
+        @media (max-width: 900px) {
+            .client-login-card {
+                padding: 34px;
+            }
+
+            .client-login-card h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <div class="client-login-container">
+        <div class="client-login-card">
+            <img src="assets/images/logo.PNG" class="logo" alt="DasherLab Logo">
+
+            <h1>Client Portal Sign In</h1>
+            <p>Access your DasherLab requests, quotes, and support tools.</p>
+
+            <form id="clientLoginForm" onsubmit="handleClientLogin(event)">
+                <div class="form-group">
+                    <label for="clientEmail">Email</label>
+                    <input
+                        type="email"
+                        id="clientEmail"
+                        name="email"
+                        placeholder="Enter your email"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="clientPassword">Password</label>
+                    <input
+                        type="password"
+                        id="clientPassword"
+                        name="password"
+                        placeholder="Enter your password"
+                        required
+                    >
+                </div>
+
+                <button id="clientSignInButton" type="submit" class="login-button">Sign In</button>
+            </form>
+
+            <button class="forgot-password-link" type="button" onclick="handleClientPasswordReset()">Forgot password?</button>
+            <p id="clientAuthError" class="client-auth-error" role="alert" aria-live="polite"></p>
+            <p id="clientAuthInfo" class="client-auth-info" aria-live="polite"></p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="Avery/supabase.js"></script>
+<script src="js/client-auth.js"></script>
+<script>
+    function setClientAuthError(message) {
+        var errorEl = document.getElementById("clientAuthError");
+        if (errorEl) {
+            errorEl.textContent = message || "";
+        }
+    }
+
+    function setClientAuthInfo(message) {
+        var infoEl = document.getElementById("clientAuthInfo");
+        if (infoEl) {
+            infoEl.textContent = message || "";
+        }
+    }
+
+    function setLoadingState(isLoading) {
+        var button = document.getElementById("clientSignInButton");
+        if (!button) {
+            return;
+        }
+        button.disabled = !!isLoading;
+        button.textContent = isLoading ? "Signing In..." : "Sign In";
+    }
+
+    async function handleClientLogin(event) {
+        event.preventDefault();
+        setClientAuthError("");
+        setClientAuthInfo("");
+
+        var email = document.getElementById("clientEmail").value.trim();
+        var password = document.getElementById("clientPassword").value;
+
+        if (!window.DasherLabClientAuth) {
+            setClientAuthError("Authentication is unavailable right now. Please try again.");
+            return;
+        }
+
+        setLoadingState(true);
+
+        try {
+            var result = await window.DasherLabClientAuth.signInClient(email, password);
+            if (!result || !result.ok) {
+                setClientAuthError(result && result.message ? result.message : "Unable to sign in right now.");
+                return;
+            }
+
+            window.location.replace("index.html");
+        } catch (error) {
+            setClientAuthError("Unable to sign in right now. Please try again.");
+        } finally {
+            setLoadingState(false);
+        }
+    }
+
+    async function handleClientPasswordReset() {
+        setClientAuthError("");
+        setClientAuthInfo("");
+
+        var email = document.getElementById("clientEmail").value.trim();
+        if (!window.DasherLabClientAuth) {
+            setClientAuthError("Password reset is unavailable right now.");
+            return;
+        }
+
+        var result = await window.DasherLabClientAuth.requestClientPasswordReset(email);
+        if (!result.ok) {
+            setClientAuthError(result.message || "Unable to send reset instructions.");
+            return;
+        }
+
+        setClientAuthInfo(result.message);
+    }
+
+    (async function redirectIfAlreadySignedIn() {
+        if (!window.DasherLabClientAuth) {
+            return;
+        }
+
+        var activeSession = await window.DasherLabClientAuth.requireClientSession({ redirect: false });
+        if (activeSession) {
+            window.location.replace("index.html");
+        }
+    })();
+</script>
+
+</body>
+</html>

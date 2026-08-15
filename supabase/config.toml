@@ -1,0 +1,7 @@
+project_id = "oezpjyuxlxluplfnylhj"
+
+[functions.avery-chat]
+verify_jwt = false
+
+[functions.notify-request-email]
+verify_jwt = true

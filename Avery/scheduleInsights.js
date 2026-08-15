@@ -133,7 +133,7 @@
         return {
             type: "scheduling_conflict",
             severity: "medium",
-            message: `I noticed two pickups are scheduled close together today:<br>• ${escapeHtml(firstName)} at ${escapeHtml(firstTime)}<br>• ${escapeHtml(secondName)} at ${escapeHtml(secondTime)}<br><br>You may want to review the schedule before confirming both requests.`,
+            message: `Ada: I noticed two pickups are scheduled close together today:<br>• ${escapeHtml(firstName)} at ${escapeHtml(firstTime)}<br>• ${escapeHtml(secondName)} at ${escapeHtml(secondTime)}<br><br>You may want to review the schedule before confirming both requests.`,
             affectedRequests: [
                 {
                     customerName: firstName,

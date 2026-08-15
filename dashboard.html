@@ -34,7 +34,7 @@
         <div class="menu-group">
             <p class="menu-section-title">Client Portal</p>
             <a href="#" onclick="goTo('index.html'); toggleMenu(); return false;">Home</a>
-            <a href="#" onclick="goTo('pickup.html'); toggleMenu(); return false;">Request Appointment</a>
+            <a href="#" onclick="goTo('pickup.html'); toggleMenu(); return false;">Request Pickup</a>
             <a href="#" onclick="goTo('quote.html'); toggleMenu(); return false;">Request Quote</a>
             <a href="#" onclick="goTo('contact.html'); toggleMenu(); return false;">Contact Customer Service</a>
         </div>
@@ -43,14 +43,14 @@
 
 <div class="page-header">
     <h1>Owner Operations Dashboard</h1>
-    <p>Monitor request volume, customer activity, and Avery insights in one place.</p>
+    <p>Monitor request volume, customer activity, and Ada insights in one place.</p>
 </div>
 
-<section class="dashboard-owner-chat-card" aria-label="Owner Avery chat">
+<section class="dashboard-owner-chat-card" aria-label="Owner Ada chat">
     <div class="owner-avery-header">
-        <img src="assets/images/avery.png" class="owner-avery-avatar" alt="Avery avatar" />
+        <img src="assets/images/avery.png" class="owner-avery-avatar" alt="Ada avatar" />
         <div>
-            <strong>Avery</strong>
+            <strong>Ada</strong>
             <p>Virtual Dispatch Coordinator</p>
             <small>Powered by EskoDSK AI</small>
         </div>
@@ -58,7 +58,7 @@
 
     <div id="ownerAveryMessages" class="owner-avery-messages" role="log" aria-live="polite">
         <div class="message avery-message">
-            <strong>Avery:</strong>
+            <strong>Ada:</strong>
             <div>Ask about today's dispatch schedule, active requests, or delivery priorities.</div>
         </div>
     </div>
@@ -119,20 +119,28 @@
     </div>
 
     <div class="dashboard-card">
-        <h2>📋 Customer Requests</h2>
-        <div class="request-tabs" role="tablist" aria-label="Customer request filters">
-            <button type="button" class="request-tab active" data-filter="active" role="tab" aria-selected="true">Awaiting Dispatch + Active</button>
-            <button type="button" class="request-tab" data-filter="completed" role="tab" aria-selected="false">Completed</button>
+        <h2>📋 Requests</h2>
+
+        <div class="request-tabs request-type-tabs" role="tablist" aria-label="Request type filters">
+            <button type="button" class="request-tab request-type-tab active" data-request-type="pickup" role="tab" aria-selected="true">Pickup Requests</button>
+            <button type="button" class="request-tab request-type-tab" data-request-type="quote" role="tab" aria-selected="false">Quote Requests</button>
+            <button type="button" class="request-tab request-type-tab" data-request-type="contact" role="tab" aria-selected="false">Contact Requests</button>
         </div>
+
+        <div class="request-tabs request-status-tabs" role="tablist" aria-label="Request status filters">
+            <button type="button" class="request-tab request-status-tab active" data-filter="active" role="tab" aria-selected="true">Awaiting Dispatch + Active</button>
+            <button type="button" class="request-tab request-status-tab" data-filter="completed" role="tab" aria-selected="false">Completed</button>
+        </div>
+
         <div id="requestList" class="request-list">
             <p>No new requests yet.</p>
         </div>
     </div>
 
     <div class="dashboard-card">
-        <h2>🤖 Avery Insights</h2>
+        <h2>🤖 Ada Insights</h2>
         <div id="averyInsightsList" class="activity-list">
-            <p>Continue processing requests and Avery will learn your business patterns.</p>
+            <p>Continue processing requests and Ada will learn your business patterns.</p>
         </div>
     </div>
 
@@ -141,19 +149,88 @@
 
 </div>
 
+<button id="floatingCalendarToggle" class="floating-calendar-button" type="button" aria-label="Open calendar">Calendar</button>
+
+<aside id="calendarDrawer" class="calendar-drawer hidden" aria-hidden="true">
+    <div class="calendar-drawer-header">
+        <h3>Scheduled Pickup Calendar</h3>
+        <button type="button" class="calendar-drawer-close" id="calendarDrawerClose" aria-label="Close calendar">✕</button>
+    </div>
+    <div class="calendar-drawer-body">
+        <div id="pickupCalendarControls" class="pickup-calendar-controls">
+            <button type="button" id="pickupCalendarPrev" class="calendar-nav" aria-label="Previous month">←</button>
+            <div id="pickupCalendarMonthLabel" class="pickup-calendar-month">Month</div>
+            <button type="button" id="pickupCalendarNext" class="calendar-nav" aria-label="Next month">→</button>
+        </div>
+        <div id="pickupCalendar" class="pickup-calendar" aria-live="polite"></div>
+    </div>
+</aside>
+
+<div id="pickupScheduleModal" class="schedule-modal hidden" aria-hidden="true">
+    <div class="schedule-modal-backdrop" data-close-schedule-modal="true"></div>
+    <div class="schedule-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle">
+        <div class="schedule-modal-header">
+            <div>
+                <p class="schedule-modal-kicker">Pickup Scheduling</p>
+                <h3 id="scheduleModalTitle">Schedule Pickup</h3>
+            </div>
+            <button type="button" class="schedule-modal-close" data-close-schedule-modal="true" aria-label="Close scheduling form">✕</button>
+        </div>
+
+        <div id="scheduleModalRequestSummary" class="schedule-modal-request-summary"></div>
+
+        <form id="schedulePickupForm" class="schedule-form">
+            <div class="schedule-form-row">
+                <label for="schedulePickupDate">Pickup Date</label>
+                <input id="schedulePickupDate" name="schedulePickupDate" type="date" />
+            </div>
+            <div class="schedule-form-row">
+                <label for="schedulePickupTime">Pickup Time</label>
+                <input id="schedulePickupTime" name="schedulePickupTime" type="time" />
+            </div>
+            <div class="schedule-form-row">
+                <label for="schedulePickupDriver">Assigned Driver</label>
+                <input id="schedulePickupDriver" name="schedulePickupDriver" type="text" placeholder="John Smith" />
+            </div>
+
+            <div class="schedule-modal-actions">
+                <button type="button" id="clearScheduleButton" class="secondary-button schedule-clear-button">Clear Schedule</button>
+                <div class="schedule-modal-action-right">
+                    <button type="button" class="secondary-button" data-close-schedule-modal="true">Cancel</button>
+                    <button type="submit" class="request-toggle">Save Schedule</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script src="Avery/dashboardAnalytics.js"></script>
 <script src="Avery/Responses.js"></script>
 <script src="Avery/scheduleInsights.js"></script>
 <script src="Avery/tools.js"></script>
 <script src="js/navigation.js"></script>
-<script src="js/script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="Avery/supabase.js"></script>
+<script src="js/client-auth.js"></script>
+<script src="js/script.js?v=20260811"></script>
 
 <script>
-if (localStorage.getItem("isLoggedIn") !== "true") {
-    window.location.replace(resolvePortalPath("login.html"));
-} else {
+(async function gateOwnerDashboard() {
+    if (!window.DasherLabClientAuth) {
+        window.location.replace("client-login.html");
+        return;
+    }
+
+    if (typeof window.DasherLabClientAuth.guardProtectedClientRoute === "function") {
+        const routeAllowed = await window.DasherLabClientAuth.guardProtectedClientRoute();
+        if (!routeAllowed) {
+            return;
+        }
+    }
+
     loadDashboard();
-}
+})();
 </script>
 
 </body>

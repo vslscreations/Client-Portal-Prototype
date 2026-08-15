@@ -17,10 +17,30 @@
             <div id="trackingStatusContent">
                 <p>Loading tracking information...</p>
             </div>
-            <button class="primary-button" type="button" onclick="window.location.href = '../dashboard.html'">Return to Dashboard</button>
+            <button class="primary-button" type="button" onclick="window.location.href = '../index.html'">Return to Home</button>
         </div>
     </div>
 
+    <script src="../js/navigation.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../Avery/supabase.js"></script>
+    <script src="../js/client-auth.js"></script>
+    <script>
+        (async function gateClientPortal() {
+            if (!window.DasherLabClientAuth) {
+                window.location.replace("../client-login.html");
+                return;
+            }
+
+            if (typeof window.DasherLabClientAuth.guardProtectedClientRoute === "function") {
+                const routeAllowed = await window.DasherLabClientAuth.guardProtectedClientRoute();
+                if (!routeAllowed) {
+                    return;
+                }
+            }
+        })();
+    </script>
     <script src="../Avery/memory.js"></script>
     <script src="../Avery/tracking.js"></script>
     <script>

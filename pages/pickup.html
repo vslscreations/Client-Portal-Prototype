@@ -34,9 +34,10 @@
         <div class="menu-group">
             <p class="menu-section-title">Client Portal</p>
             <a href="#" onclick="goTo('index.html'); toggleMenu(); return false;">Home</a>
-            <a href="#" onclick="goTo('pickup.html'); toggleMenu(); return false;">Request Appointment</a>
+            <a href="#" onclick="goTo('pickup.html'); toggleMenu(); return false;">Request Pickup</a>
             <a href="#" onclick="goTo('quote.html'); toggleMenu(); return false;">Request Quote</a>
             <a href="#" onclick="goTo('contact.html'); toggleMenu(); return false;">Contact Customer Service</a>
+            <a href="#" onclick="AveryActions.logout(); toggleMenu(); return false;">Sign Out</a>
         </div>
     </div>
 </div>
@@ -185,12 +186,31 @@
 <script src="../Avery/conversation.js"></script>
 <script src="../Avery/taskmodel.js"></script>
 <script src="../Avery/tracking.js"></script>
-<script src="../js/pickup.js"></script>
+<script src="../js/pickup.js?v=20260811"></script>
 <script src="../Avery/actions.js"></script>
 <script src="../Avery/knowledge.js"></script>
 <script src="../Avery/workflows.js"></script>
 <script src="../Avery/workflowengine.js"></script>
 <script src="../Avery/tools.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../Avery/supabase.js"></script>
+<script src="../js/client-auth.js"></script>
+<script>
+(async function gateClientPortal() {
+    if (!window.DasherLabClientAuth) {
+        window.location.replace("../client-login.html");
+        return;
+    }
+
+    if (typeof window.DasherLabClientAuth.guardProtectedClientRoute === "function") {
+        const routeAllowed = await window.DasherLabClientAuth.guardProtectedClientRoute();
+        if (!routeAllowed) {
+            return;
+        }
+    }
+})();
+</script>
 <script src="../js/script.js"></script>
 <script src="../Avery/populateform.js"></script>
 <script>

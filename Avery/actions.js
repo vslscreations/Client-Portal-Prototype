@@ -24,9 +24,13 @@ const AveryActions = {
 
     // User Actions
 
-    logout: function () {
-        localStorage.clear();
-        window.location.href = window.resolvePortalPath ? window.resolvePortalPath("login.html") : "login.html";
+    logout: async function () {
+        if (window.DasherLabClientAuth && typeof window.DasherLabClientAuth.signOutClient === "function") {
+            await window.DasherLabClientAuth.signOutClient();
+            return;
+        }
+
+        window.location.href = window.resolvePortalPath ? window.resolvePortalPath("client-login.html") : "client-login.html";
     },
 
 

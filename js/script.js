@@ -7,6 +7,222 @@ function escapeHtml(value){
         .replace(/'/g, "&#39;");
 }
 
+function renderInlineMarkdown(text){
+    return escapeHtml(String(text || ""))
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\n/g, "<br>");
+}
+
+function renderSafeMarkdown(markdownText){
+    const text = String(markdownText == null ? "" : markdownText).replace(/\r\n/g, "\n");
+    if (!text.trim()) {
+        return "";
+    }
+
+    const blocks = text.split(/\n\s*\n+/).filter(Boolean);
+
+    return blocks.map(function (block) {
+        const trimmedBlock = block.trim();
+
+        if (/^#{1,6}\s+/.test(trimmedBlock)) {
+            const match = trimmedBlock.match(/^(#{1,6})\s+(.*)$/);
+            if (match) {
+                const level = Math.min(match[1].length, 6);
+                const content = renderInlineMarkdown(match[2]);
+                return `<h${level}>${content}</h${level}>`;
+            }
+        }
+
+        const lines = trimmedBlock.split(/\n/).map(function (line) {
+            return line.trim();
+        }).filter(Boolean);
+
+        if (lines.length && lines.every(function (line) {
+            return /^[-*]\s+/.test(line);
+        })) {
+            return "<ul>" + lines.map(function (line) {
+                return "<li>" + renderInlineMarkdown(line.replace(/^[-*]\s+/, "")) + "</li>";
+            }).join("") + "</ul>";
+        }
+
+        if (lines.length && lines.every(function (line) {
+            return /^\d+\.\s+/.test(line);
+        })) {
+            return "<ol>" + lines.map(function (line) {
+                return "<li>" + renderInlineMarkdown(line.replace(/^\d+\.\s+/, "")) + "</li>";
+            }).join("") + "</ol>";
+        }
+
+        return "<p>" + renderInlineMarkdown(trimmedBlock) + "</p>";
+    }).join("");
+}
+
+function buildTypingIndicator(){
+    const typing = document.createElement("div");
+    typing.className = "message avery-message typing-message";
+    typing.innerHTML = '<strong>Ada:</strong><div class="typing-indicator"><span class="typing-label">Ada is typing...</span><span class="typing-dots" aria-label="Ada is typing"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span></div>';
+    return typing;
+}
+
+function formatDisplayDate(dateValue){
+    if (!dateValue) {
+        return "Not scheduled";
+    }
+
+    const rawValue = String(dateValue).trim();
+    if (!rawValue) {
+        return "Not scheduled";
+    }
+
+    const safeDate = new Date(rawValue.includes("T") ? rawValue : rawValue + "T00:00:00");
+    if (Number.isNaN(safeDate.getTime())) {
+        return rawValue;
+    }
+
+    return safeDate.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+    });
+}
+
+function formatDisplayTime(timeValue){
+    if (!timeValue) {
+        return "Not scheduled";
+    }
+
+    const rawValue = String(timeValue).trim();
+    if (!rawValue) {
+        return "Not scheduled";
+    }
+
+    const [hours, minutes] = rawValue.split(":");
+    if (hours === undefined || minutes === undefined) {
+        return rawValue;
+    }
+
+    const hourValue = Number(hours);
+    const minuteValue = Number(minutes || 0);
+    if (!Number.isFinite(hourValue) || !Number.isFinite(minuteValue)) {
+        return rawValue;
+    }
+
+    const date = new Date();
+    date.setHours(hourValue, minuteValue, 0, 0);
+    return date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit"
+    });
+}
+
+function getOwnerOperationalRecord(response){
+    if (!response || !response.tool_results || !Array.isArray(response.tool_results)) {
+        return null;
+    }
+
+    for (const toolResult of response.tool_results) {
+        const result = toolResult && toolResult.result;
+        if (!result) {
+            continue;
+        }
+
+        const records = Array.isArray(result) ? result : [];
+        if (records.length > 0 && (records[0].tracking_number || records[0].assigned_driver || records[0].status)) {
+            return records[0];
+        }
+    }
+
+    return null;
+}
+
+function renderOwnerActionButtons(record){
+    if (!record || !record.tracking_number) {
+        return "";
+    }
+
+    return [
+        {
+            label: "View Pickup",
+            action: "view-pickup",
+            trackingNumber: record.tracking_number
+        }
+    ].map(function (button) {
+        const dataset = `data-action="${button.action}"` + (button.trackingNumber ? ` data-tracking-number="${escapeHtml(String(button.trackingNumber))}"` : "");
+        return `<button type="button" class="owner-ada-action" ${dataset}>${escapeHtml(button.label)}</button>`;
+    }).join("");
+}
+
+function appendOwnerActionSummary(response){
+    const messages = document.getElementById("ownerAveryMessages");
+    if (!messages) {
+        return;
+    }
+
+    const toolResults = response && response.tool_results && Array.isArray(response.tool_results) ? response.tool_results : [];
+    const specificLookup = toolResults.find(function (toolResult) {
+        return toolResult && toolResult.toolName === "lookup_pickup";
+    });
+
+    const record = specificLookup ? getOwnerOperationalRecord({ tool_results: [specificLookup] }) : null;
+    if (!record) {
+        return;
+    }
+
+    const summary = document.createElement("div");
+    summary.className = "owner-ada-summary-card";
+
+    const requestDate = record.pickup_date || record.requested_pickup_date || "";
+    const requestTime = record.pickup_time || record.requested_pickup_time || "";
+    const scheduledDate = record.scheduled_pickup_date || "";
+    const scheduledTime = record.scheduled_pickup_time || "";
+    const status = record.status || "Awaiting Dispatch";
+    const driver = record.assigned_driver || "Not assigned";
+
+    summary.innerHTML = `
+        <div class="owner-ada-summary-header">
+            <div>
+                <div class="owner-ada-summary-kicker">Pickup</div>
+                <div class="owner-ada-summary-tracking">${escapeHtml(record.tracking_number || "Not available")}</div>
+            </div>
+        </div>
+        <div class="owner-ada-summary-grid">
+            <div><div class="owner-ada-summary-label">Pickup address</div><div>${escapeHtml(record.pickup_address || "Not provided")}</div></div>
+            <div><div class="owner-ada-summary-label">Delivery address</div><div>${escapeHtml(record.delivery_address || "Not provided")}</div></div>
+            <div><div class="owner-ada-summary-label">Customer requested</div><div>${escapeHtml(formatDisplayDate(requestDate) + (requestTime ? " at " + formatDisplayTime(requestTime) : ""))}</div></div>
+            <div><div class="owner-ada-summary-label">Scheduled</div><div>${escapeHtml(formatDisplayDate(scheduledDate) + (scheduledTime ? " at " + formatDisplayTime(scheduledTime) : ""))}</div></div>
+            <div><div class="owner-ada-summary-label">Driver</div><div>${escapeHtml(driver)}</div></div>
+            <div><div class="owner-ada-summary-label">Status</div><div>${escapeHtml(status)}</div></div>
+        </div>
+        <div class="owner-ada-action-row">${renderOwnerActionButtons(record)}</div>
+    `;
+
+    messages.appendChild(summary);
+    messages.scrollTop = messages.scrollHeight;
+
+    const buttons = summary.querySelectorAll(".owner-ada-action");
+    buttons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            const action = button.getAttribute("data-action");
+            const trackingNumber = button.getAttribute("data-tracking-number");
+
+            if (action === "view-pickup" && trackingNumber) {
+                const requests = Array.isArray(window.dashboardRequestsCache)
+                    ? window.dashboardRequestsCache
+                    : JSON.parse(localStorage.getItem("requests") || "[]");
+                const match = requests.find(function (request) {
+                    const tracking = request && (request.trackingId || request.tracking_number || request.quoteReference);
+                    return tracking && String(tracking).toLowerCase() === String(trackingNumber).toLowerCase();
+                });
+
+                if (match && typeof openScheduleModal === "function") {
+                    const index = requests.indexOf(match);
+                    openScheduleModal(index);
+                }
+            }
+        });
+    });
+}
+
 function getOwnerAveryResponse(text){
     const lowerText = (text || "").toLowerCase();
     const tools = window.AveryTools;
@@ -114,11 +330,7 @@ function getOwnerAveryResponse(text){
 }
 
 function getOwnerAverySuggestionPrompts(){
-    return [
-        { label: "Today's schedule", prompt: "What's today's schedule?" },
-        { label: "Business health", prompt: "How is business doing?" },
-        { label: "Recent requests", prompt: "Show recent requests" }
-    ];
+    return [];
 }
 
 function appendOwnerAverySuggestionRow(messageElement){
@@ -132,9 +344,7 @@ function appendOwnerAverySuggestionRow(messageElement){
 
     const suggestions = document.createElement("div");
     suggestions.className = "owner-avery-suggestions";
-    suggestions.innerHTML = getOwnerAverySuggestionPrompts().map(function (item) {
-        return `<a href="#" class="owner-avery-suggestion" data-prompt="${escapeHtml(item.prompt)}">${escapeHtml(item.label)}</a>`;
-    }).join("");
+    suggestions.innerHTML = "";
 
     messageElement.appendChild(suggestions);
 }
@@ -174,22 +384,25 @@ function appendOwnerAveryMessage(role, content){
     }
 
     const wrapperClass = role === "user" ? "user-message" : "avery-message";
-    const label = role === "user" ? "You" : "Avery";
+    const label = role === "user" ? "You" : "Ada";
     const message = document.createElement("div");
     message.className = `message ${wrapperClass}`;
-    message.innerHTML = `<strong>${escapeHtml(label)}:</strong><div>${content}</div>`;
-    messages.appendChild(message);
 
     if (role === "avery") {
-        appendOwnerAverySuggestionRow(message);
+        message.innerHTML = `<strong>${escapeHtml(label)}:</strong><div class="message-body">${renderSafeMarkdown(content)}</div>`;
+    } else {
+        message.innerHTML = `<strong>${escapeHtml(label)}:</strong><div class="message-body">${escapeHtml(String(content || ""))}</div>`;
     }
+
+    messages.appendChild(message);
 
     messages.scrollTop = messages.scrollHeight;
 }
 
-function sendOwnerAveryMessage(){
+async function sendOwnerAveryMessage(){
     const input = document.getElementById("ownerAveryInput");
     const messages = document.getElementById("ownerAveryMessages");
+    const button = document.getElementById("ownerAverySend");
 
     if (!input || !messages) {
         return;
@@ -200,21 +413,43 @@ function sendOwnerAveryMessage(){
         return;
     }
 
-    appendOwnerAveryMessage("user", escapeHtml(text));
+    if (button) {
+        button.disabled = true;
+    }
+    input.disabled = true;
+
+    appendOwnerAveryMessage("user", text);
     input.value = "";
 
-    const typing = document.createElement("div");
-    typing.className = "message avery-message owner-avery-typing";
-    typing.innerHTML = "<strong>Avery:</strong><div>is typing…</div>";
+    const typing = buildTypingIndicator();
     messages.appendChild(typing);
     messages.scrollTop = messages.scrollHeight;
 
-    setTimeout(function () {
+    try {
+        const response = await callAveryChatEdgeFunction(text, "owner_employee");
+        const assistantText = response && typeof response.assistant_text === "string"
+            ? response.assistant_text
+            : "I’m sorry, I couldn’t process that request right now.";
+
         if (typing.parentNode) {
             typing.remove();
         }
+
+        appendOwnerAveryMessage("avery", assistantText);
+        appendOwnerActionSummary(response);
+    } catch (error) {
+        if (typing.parentNode) {
+            typing.remove();
+        }
+
         appendOwnerAveryMessage("avery", getOwnerAveryResponse(text));
-    }, 700);
+    } finally {
+        if (button) {
+            button.disabled = false;
+        }
+        input.disabled = false;
+        input.focus();
+    }
 }
 
 function buildOwnerProactiveInsight(){
@@ -279,9 +514,14 @@ function displayOwnerMessage(content){
         return;
     }
 
+    const cleanedContent = String(content || "")
+        .replace(/^Avery:\s*/i, "")
+        .replace(/^Ada:\s*/i, "")
+        .trim();
+
     const message = document.createElement("div");
     message.className = "message avery-message";
-    message.innerHTML = `<strong>Avery:</strong><div>${content}</div>`;
+    message.innerHTML = `<strong>Ada:</strong><div>${cleanedContent}</div>`;
     messages.appendChild(message);
     messages.scrollTop = messages.scrollHeight;
 }
@@ -315,7 +555,8 @@ function initOwnerAveryDashboard(){
     } else {
         const initialMessage = document.createElement("div");
         initialMessage.className = "message avery-message";
-        initialMessage.innerHTML = `<strong>Avery:</strong><div>${AveryResponses.OWNER_WELCOME || "I can help with your daily operations."}</div>`;
+        const welcomeText = String(AveryResponses.OWNER_WELCOME || "I can help with your daily operations.").replace(/^Avery:\s*/i, "").replace(/^Ada:\s*/i, "");
+        initialMessage.innerHTML = `<strong>Ada:</strong><div>${welcomeText}</div>`;
         messages.appendChild(initialMessage);
         appendOwnerAverySuggestionRow(initialMessage);
     }
@@ -329,279 +570,165 @@ function initOwnerAveryDashboard(){
     }, 250);
 }
 
-function sendMessage(){
-
-    const input = document.getElementById("userInput");
-
-    const messages = document.getElementById("messages");
-
-
-    let text = input.value;
-
-
-    if(text.trim() === ""){
-        return;
+async function callAveryChatEdgeFunction(message, context = "client"){
+    if (!window.supabaseClient) {
+        throw new Error("Supabase client not initialized");
     }
-// Avery Intelligence Layer
 
-if (!AveryConversation.currentIntent) {
-    const intent = detectIntent(text);
-    AveryConversation.setIntent(intent);
+    let authorizationHeader = "";
+    try {
+        const sessionResult = await window.supabaseClient.auth.getSession();
+        const session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
+        const accessToken = session && session.access_token ? session.access_token : "";
+        if (accessToken) {
+            authorizationHeader = `Bearer ${accessToken}`;
+        }
+    } catch (sessionError) {
+        console.warn("[avery-chat] unable to read session for Authorization header", sessionError);
+    }
+
+    const { data, error } = await window.supabaseClient.functions.invoke("avery-chat", {
+        body: { message, context },
+        headers: authorizationHeader ? {
+            Authorization: authorizationHeader,
+            apikey: window.DASHERLAB_SUPABASE_CONFIG && window.DASHERLAB_SUPABASE_CONFIG.anonKey ? window.DASHERLAB_SUPABASE_CONFIG.anonKey : ""
+        } : undefined
+    });
+
+    if (error) {
+        throw new Error(error.message || "Edge function request failed");
+    }
+
+    return data || {};
 }
 
-    messages.innerHTML += `
+async function sendMessage(){
 
-    <div class="message user-message">
+    const input = document.getElementById("userInput");
+    const messages = document.getElementById("messages");
+    const sendButton = document.querySelector(".chat-box button");
 
-        ${text}
+    if (!input || !messages) {
+        return;
+    }
 
-    </div>
+    const text = input.value.trim();
 
-    `;
+    if(text === ""){
+        return;
+    }
 
+    if (sendButton) {
+        sendButton.disabled = true;
+    }
+    input.disabled = true;
+
+    if (!AveryConversation.currentIntent) {
+        const intent = detectIntent(text);
+        AveryConversation.setIntent(intent);
+    }
+
+    const userMessage = document.createElement("div");
+    userMessage.className = "message user-message";
+    userMessage.textContent = text;
+    messages.appendChild(userMessage);
 
     input.value = "";
 
-
-// Show typing indicator
-
-messages.innerHTML += `
-
-<div class="message avery-message typing">
-
-<strong>Avery:</strong>
-
-<span>is typing</span>
-
-</div>
-
-`;
-
-
-messages.scrollTop = messages.scrollHeight;
-
-
-
-setTimeout(()=>{
-
-    let response = "";
-
-    let lowerText = text.toLowerCase();
-
-    let intent = detectIntent(text);
-
-    const wantsNewRoute = lowerText === "new" ||
-        lowerText.includes("new route") ||
-        lowerText.includes("start a new route") ||
-        lowerText.includes("start route") ||
-        (lowerText.includes("new") && lowerText.includes("route"));
-
-    const isWorkflowStartMessage = lowerText.includes("appointment") ||
-        lowerText.includes("schedule") ||
-        lowerText.includes("book") ||
-        lowerText.includes("meeting") ||
-        lowerText.includes("pickup") ||
-        lowerText.includes("package") ||
-        lowerText.includes("courier") ||
-        lowerText.includes("new route") ||
-        lowerText.includes("start a new route") ||
-        lowerText.includes("start route");
-
-if(
-    AveryConversation.currentIntent === "START_PICKUP" &&
-    AveryConversation.currentStep >= 1 &&
-    !isWorkflowStartMessage &&
-    !wantsNewRoute
-){
-
-    response = AveryWorkflowEngine.handleResponse(text);
-
-    if (AveryConversation.currentIntent === "START_PICKUP" && AveryConversation.currentStep === 4) {
-        setTimeout(() => {
-            AveryActions.openPickup();
-        }, 150);
-    }
-
-}
-else if (isWorkflowStartMessage || wantsNewRoute){
-
-    if(wantsNewRoute){
-        AveryConversation.saveData("forceNewRoute", true);
-        AveryConversation.saveData("freshRouteHandoff", true);
-        AveryMemory.set("freshRouteHandoff", true);
-    }
-
-    response = AveryWorkflowEngine.start("START_PICKUP");
-}
-    else if(lowerText.includes("quote")
-    || lowerText.includes("price")
-    || lowerText.includes("cost")
-){
-
-response = AveryResponses.REQUEST_QUOTE;
-
-    }
-
-
-else if(
-lowerText.includes("contact") ||
-lowerText.includes("person") ||
-lowerText.includes("human") ||
-lowerText.includes("representative") ||
-lowerText.includes("someone")
-){
-
-response = AveryResponses.CONTACT_DISPATCH;
-}
-
-else if(
-lowerText.includes("coverage area") ||
-lowerText.includes("service area") ||
-lowerText.includes("areas you serve") ||
-lowerText.includes("where do you serve") ||
-lowerText.includes("where do you operate") ||
-lowerText.includes("where do you cover")
-){
-
-response = `
-
-Our coverage area includes:
-
-<br><br>
-
-${(businessKnowledge.serviceAreas || []).map(function(area){
-    return `• ${area}`;
-}).join("<br>")}
-
-<br><br>
-
-We also support statewide custom routes for larger or recurring needs.
-
-`;
-
-}
-
-else if(
-lowerText.includes("service") ||
-lowerText.includes("offer") ||
-lowerText.includes("do you do")
-){
-
-response = `
-
-We support medical and courier logistics needs with:
-
-<br><br>
-
-✔ Medical specimen and supply transport
-<br>
-✔ Same-day and scheduled pickup requests
-<br>
-✔ Route-based delivery coordination
-<br>
-✔ Quote requests for urgent or recurring routes
-<br>
-✔ Dispatch support for business and healthcare operations
-
-<br><br>
-
-Would you like to request a pickup or get a quote?
-
-`;
-
-}
-
-
-
-else if(
-lowerText.includes("price") ||
-lowerText.includes("pricing") ||
-lowerText.includes("cost")
-){
-
-response = `
-
-${businessKnowledge.pricing}
-
-<br><br>
-
-I can help you generate a custom estimate.
-
-<br><br>
-
-<button onclick="goTo('pages/quote.html')">
-
-💰 Get a Quote
-
-</button>
-
-`;
-
-}
-
-
-
-else if(
-lowerText.includes("hours") ||
-lowerText.includes("open")
-){
-
-response = `
-
-Our business hours are:
-
-<br><br>
-
-${businessKnowledge.hours}
-
-`;
-
-}
-
-
-
-else {
-
-response = `
-
-${businessKnowledge.description}
-
-<br><br>
-
-I can help answer questions, create quotes,
-or connect you with a team member.
-
-`;
-
-}
-
-    // Remove typing indicator
-
-    let typing = document.querySelector(".typing");
-
-    if(typing){
-        typing.remove();
-    }
-
-
-
-    messages.innerHTML += `
-
-    <div class="message avery-message">
-
-    <strong>Avery:</strong>
-
-    ${response}
-
-    </div>
-
-    `;
-
-
+    const typing = buildTypingIndicator();
+    messages.appendChild(typing);
     messages.scrollTop = messages.scrollHeight;
 
+    try {
+        const intent = detectIntent(text);
+        if (intent === AveryIntents.START_PICKUP) {
+            const assistantMessage = document.createElement("div");
+            assistantMessage.className = "message avery-message";
+            assistantMessage.innerHTML = "<strong>Ada:</strong><div class=\"message-body\">I’ll open the pickup request form and pass you through to dispatch in just a moment.</div>";
+            if (typing.parentNode) {
+                typing.remove();
+            }
+            messages.appendChild(assistantMessage);
+            messages.scrollTop = messages.scrollHeight;
+            setTimeout(function () {
+                if (typeof window.resolvePortalPath === "function") {
+                    window.location.href = window.resolvePortalPath("pages/pickup.html");
+                    return;
+                }
+                window.location.href = "pages/pickup.html";
+            }, 1200);
+            return;
+        }
 
-},1200);
+        if (intent === AveryIntents.REQUEST_QUOTE) {
+            const assistantMessage = document.createElement("div");
+            assistantMessage.className = "message avery-message";
+            assistantMessage.innerHTML = "<strong>Ada:</strong><div class=\"message-body\">Absolutely. I’ll open the quote request form for you.</div>";
+            if (typing.parentNode) {
+                typing.remove();
+            }
+            messages.appendChild(assistantMessage);
+            messages.scrollTop = messages.scrollHeight;
+            setTimeout(function () {
+                if (typeof window.resolvePortalPath === "function") {
+                    window.location.href = window.resolvePortalPath("pages/quote.html");
+                    return;
+                }
+                window.location.href = "pages/quote.html";
+            }, 1200);
+            return;
+        }
+
+        if (intent === AveryIntents.CONTACT_DISPATCH) {
+            const assistantMessage = document.createElement("div");
+            assistantMessage.className = "message avery-message";
+            assistantMessage.innerHTML = "<strong>Ada:</strong><div class=\"message-body\">Of course. I’ll open the contact form for you.</div>";
+            if (typing.parentNode) {
+                typing.remove();
+            }
+            messages.appendChild(assistantMessage);
+            messages.scrollTop = messages.scrollHeight;
+            setTimeout(function () {
+                if (typeof window.resolvePortalPath === "function") {
+                    window.location.href = window.resolvePortalPath("pages/contact.html");
+                    return;
+                }
+                window.location.href = "pages/contact.html";
+            }, 1200);
+            return;
+        }
+
+        const response = await callAveryChatEdgeFunction(text, "client");
+        const assistantText = response && typeof response.assistant_text === "string"
+            ? response.assistant_text
+            : "I’m sorry, I couldn’t respond right now.";
+
+        if (typing.parentNode) {
+            typing.remove();
+        }
+
+        const assistantMessage = document.createElement("div");
+        assistantMessage.className = "message avery-message";
+        assistantMessage.innerHTML = `<strong>Ada:</strong><div class="message-body">${renderSafeMarkdown(assistantText)}</div>`;
+        messages.appendChild(assistantMessage);
+        messages.scrollTop = messages.scrollHeight;
+    } catch (error) {
+        if (typing.parentNode) {
+            typing.remove();
+        }
+
+        const fallback = document.createElement("div");
+        fallback.className = "message avery-message";
+        fallback.innerHTML = "<strong>Ada:</strong><div class=\"message-body\">Sorry, I couldn’t reach the AI assistant right now. Please try again in a moment.</div>";
+        messages.appendChild(fallback);
+        messages.scrollTop = messages.scrollHeight;
+    } finally {
+        if (sendButton) {
+            sendButton.disabled = false;
+        }
+        input.disabled = false;
+        input.focus();
+    }
 }
 
 const userInput = document.getElementById("userInput");
@@ -628,6 +755,10 @@ function toggleMenu(){
 }
 
 function getRequestTitle(request){
+    if(request && request.sourceType === "contact"){
+        return "👤 Human Follow-Up";
+    }
+
     if(request && request.trackingId){
         return "📦 Pickup Request";
     }
@@ -651,8 +782,15 @@ function getRequestBusiness(request){
 }
 
 function getRequestContact(request){
+    if(request && request.sourceType === "quote"){
+        return "";
+    }
+
     if(request && request.customer && request.customer.customerName){
         return request.customer.customerName;
+    }
+    if(request && request.name){
+        return request.name;
     }
     return request && (request.contact || request.customerName) ? (request.contact || request.customerName) : "Not specified";
 }
@@ -672,6 +810,10 @@ function getRequestPhone(request){
 }
 
 function getRequestService(request){
+    if(request && request.sourceType === "contact"){
+        return request.requestTypeLabel || "Contact Dispatch";
+    }
+
     if(request && request.delivery && request.delivery.serviceLevel){
         return request.delivery.serviceLevel;
     }
@@ -682,6 +824,14 @@ function getRequestService(request){
 }
 
 function getRequestPriority(request){
+    if(request && request.sourceType === "quote" && request.quote && request.quote.priority){
+        return request.quote.priority;
+    }
+
+    if(request && request.sourceType === "contact" && request.priority){
+        return request.priority;
+    }
+
     return request && request.priority ? request.priority : ((request && request.delivery && request.delivery.serviceLevel) || "Standard");
 }
 
@@ -711,19 +861,34 @@ function getRequestStatusClass(status){
     return status === "Completed" ? "completed" : status === "Active" ? "active" : "";
 }
 
-function updateRequestStatus(index, status){
-    const requests = JSON.parse(localStorage.getItem("requests") || "[]");
-    if (!requests[index]) {
+async function updateRequestStatus(index, status){
+    const cachedRequests = Array.isArray(window.dashboardRequestsCache) ? window.dashboardRequestsCache : null;
+    const requests = cachedRequests || JSON.parse(localStorage.getItem("requests") || "[]");
+    const targetRequest = requests[index];
+
+    if (!targetRequest) {
         return;
     }
 
-    requests[index].status = status;
+    if(targetRequest.sourceTable && targetRequest.sourceId && window.supabaseClient){
+        const updateResult = await window.supabaseClient
+            .from(targetRequest.sourceTable)
+            .update({ status: status })
+            .eq("id", targetRequest.sourceId);
+
+        if(updateResult.error){
+            return;
+        }
+    }
+
+    targetRequest.status = status;
+    window.dashboardRequestsCache = requests;
     localStorage.setItem("requests", JSON.stringify(requests));
     loadDashboard();
 }
 
-function updateRequestStatusFromSelect(index, status){
-    updateRequestStatus(index, status);
+async function updateRequestStatusFromSelect(index, status){
+    await updateRequestStatus(index, status);
 }
 
 function getRequestCreatedAt(request){
@@ -738,6 +903,9 @@ function getRequestCreatedAt(request){
 }
 
 function getRequestTrackingNumber(request){
+    if(request && request.quoteReference){
+        return request.quoteReference;
+    }
     return request && request.trackingId ? request.trackingId : "Not available";
 }
 
@@ -756,6 +924,10 @@ function getRequestDeliveryAddress(request){
 }
 
 function getRequestNotes(request){
+    if(request && request.sourceType === "contact"){
+        return request.message || "No additional notes provided.";
+    }
+
     if(request && request.delivery && request.delivery.notes){
         return request.delivery.notes;
     }
@@ -766,6 +938,386 @@ function getRequestNotes(request){
         return request.message;
     }
     return "No additional notes provided.";
+}
+
+function getRequestScheduleDate(request){
+    if(!request){
+        return "";
+    }
+    return request.scheduled_pickup_date || request.scheduledPickupDate || request.scheduleDate || "";
+}
+
+function getRequestScheduleTime(request){
+    if(!request){
+        return "";
+    }
+    return request.scheduled_pickup_time || request.scheduledPickupTime || request.scheduleTime || "";
+}
+
+function getRequestAssignedDriver(request){
+    if(!request){
+        return "";
+    }
+    return request.assigned_driver || request.assignedDriver || request.driverName || "";
+}
+
+function formatScheduleDateValue(value){
+    if(!value){
+        return "Not scheduled";
+    }
+    const date = new Date(value + "T00:00:00");
+    if(Number.isNaN(date.getTime())){
+        return String(value);
+    }
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function formatScheduleTimeValue(value){
+    if(!value){
+        return "Time TBD";
+    }
+    if(value.includes("T")){
+        const date = new Date(value);
+        if(!Number.isNaN(date.getTime())){
+            return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+        }
+    }
+    const [hours, minutes] = String(value).split(":");
+    if(hours === undefined || minutes === undefined){
+        return String(value);
+    }
+    const hourValue = Number(hours);
+    const minutesValue = Number(minutes);
+    const safeDate = new Date();
+    safeDate.setHours(hourValue, minutesValue, 0, 0);
+    return safeDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
+function getRequestSummaryLabel(request){
+    if(!request){
+        return "Pickup request";
+    }
+    const customer = request.customer && (request.customer.companyName || request.customer.customerName)
+        ? (request.customer.companyName || request.customer.customerName)
+        : (request.businessName || "Pickup request");
+    return customer;
+}
+
+function openScheduleModal(index){
+    const requests = Array.isArray(window.dashboardRequestsCache)
+        ? window.dashboardRequestsCache
+        : JSON.parse(localStorage.getItem("requests") || "[]");
+    const request = requests[index];
+    if(!request || request.sourceType !== "pickup"){
+        return;
+    }
+
+    const modal = document.getElementById("pickupScheduleModal");
+    const dateField = document.getElementById("schedulePickupDate");
+    const timeField = document.getElementById("schedulePickupTime");
+    const driverInput = document.getElementById("schedulePickupDriver");
+    const summary = document.getElementById("scheduleModalRequestSummary");
+
+    if(!modal || !dateField || !timeField || !driverInput || !summary){
+        return;
+    }
+
+    window.DasherLabDashboardSchedule = window.DasherLabDashboardSchedule || {};
+    window.DasherLabDashboardSchedule.activeRequestIndex = index;
+
+    dateField.value = getRequestScheduleDate(request) || "";
+    timeField.value = getRequestScheduleTime(request) || "";
+    driverInput.value = getRequestAssignedDriver(request) || "";
+
+    const requestName = getRequestSummaryLabel(request);
+    const requestAddress = request.delivery && request.delivery.pickupAddress ? request.delivery.pickupAddress : "No pickup address available";
+    const requestStatus = getRequestStatus(request);
+    summary.innerHTML = `<strong>${escapeHtml(requestName)}</strong><br>${escapeHtml(requestAddress)}<br><span>Status: ${escapeHtml(requestStatus)}</span>`;
+
+    const card = document.querySelector(`.request-card[data-index="${index}"]`);
+    if(card){
+        card.classList.add("expanded");
+    }
+
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function closeScheduleModal(){
+    const modal = document.getElementById("pickupScheduleModal");
+    if(!modal){
+        return;
+    }
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+}
+
+async function savePickupSchedule(event){
+    event.preventDefault();
+
+    const modal = document.getElementById("pickupScheduleModal");
+    const dateField = document.getElementById("schedulePickupDate");
+    const timeField = document.getElementById("schedulePickupTime");
+    const driverInput = document.getElementById("schedulePickupDriver");
+
+    if(!modal || !dateField || !timeField || !driverInput){
+        return;
+    }
+
+    const requests = Array.isArray(window.dashboardRequestsCache)
+        ? window.dashboardRequestsCache
+        : JSON.parse(localStorage.getItem("requests") || "[]");
+    const index = window.DasherLabDashboardSchedule && window.DasherLabDashboardSchedule.activeRequestIndex;
+    const targetRequest = requests[index];
+
+    if(!targetRequest || targetRequest.sourceType !== "pickup"){
+        closeScheduleModal();
+        return;
+    }
+
+    const nextDate = dateField.value || null;
+    const nextTime = timeField.value || null;
+    const nextDriver = (driverInput.value || "").trim() || null;
+
+    if(window.supabaseClient && targetRequest.sourceTable && targetRequest.sourceId){
+        const updateResult = await window.supabaseClient
+            .from(targetRequest.sourceTable)
+            .update({
+                scheduled_pickup_date: nextDate,
+                scheduled_pickup_time: nextTime,
+                assigned_driver: nextDriver
+            })
+            .eq("id", targetRequest.sourceId);
+
+        if(updateResult.error){
+            return;
+        }
+    }
+
+    targetRequest.scheduled_pickup_date = nextDate;
+    targetRequest.scheduled_pickup_time = nextTime;
+    targetRequest.assigned_driver = nextDriver;
+
+    window.dashboardRequestsCache = requests;
+    localStorage.setItem("requests", JSON.stringify(requests));
+    closeScheduleModal();
+    renderDashboardRequests(requests);
+    renderPickupCalendar();
+}
+
+async function clearPickupSchedule(){
+    const requests = Array.isArray(window.dashboardRequestsCache)
+        ? window.dashboardRequestsCache
+        : JSON.parse(localStorage.getItem("requests") || "[]");
+    const index = window.DasherLabDashboardSchedule && window.DasherLabDashboardSchedule.activeRequestIndex;
+    const targetRequest = requests[index];
+
+    if(!targetRequest || targetRequest.sourceType !== "pickup"){
+        return;
+    }
+
+    if(window.supabaseClient && targetRequest.sourceTable && targetRequest.sourceId){
+        const updateResult = await window.supabaseClient
+            .from(targetRequest.sourceTable)
+            .update({
+                scheduled_pickup_date: null,
+                scheduled_pickup_time: null,
+                assigned_driver: null
+            })
+            .eq("id", targetRequest.sourceId);
+
+        if(updateResult.error){
+            return;
+        }
+    }
+
+    targetRequest.scheduled_pickup_date = null;
+    targetRequest.scheduled_pickup_time = null;
+    targetRequest.assigned_driver = null;
+
+    window.dashboardRequestsCache = requests;
+    localStorage.setItem("requests", JSON.stringify(requests));
+    const dateField = document.getElementById("schedulePickupDate");
+    const timeField = document.getElementById("schedulePickupTime");
+    const driverInput = document.getElementById("schedulePickupDriver");
+    if(dateField){ dateField.value = ""; }
+    if(timeField){ timeField.value = ""; }
+    if(driverInput){ driverInput.value = ""; }
+    renderDashboardRequests(requests);
+    renderPickupCalendar();
+}
+
+function renderPickupCalendar(){
+    const calendar = document.getElementById("pickupCalendar");
+    if(!calendar){
+        return;
+    }
+
+    const monthLabel = document.getElementById("pickupCalendarMonthLabel");
+    if(monthLabel){
+        const monthDate = window.DasherLabDashboardSchedule && window.DasherLabDashboardSchedule.currentMonth
+            ? new Date(window.DasherLabDashboardSchedule.currentMonth)
+            : new Date();
+        monthLabel.textContent = monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    }
+
+    const monthDate = window.DasherLabDashboardSchedule && window.DasherLabDashboardSchedule.currentMonth
+        ? new Date(window.DasherLabDashboardSchedule.currentMonth)
+        : new Date();
+    const month = monthDate.getMonth();
+    const year = monthDate.getFullYear();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startOffset = firstDay.getDay();
+    const totalDays = lastDay.getDate();
+    const requests = Array.isArray(window.dashboardRequestsCache) ? window.dashboardRequestsCache : JSON.parse(localStorage.getItem("requests") || "[]");
+
+    const scheduleItems = requests.filter(function(request){
+        return request && request.sourceType === "pickup" && request.scheduled_pickup_date;
+    });
+
+    const dayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const headerHtml = dayHeaders.map(function(day){
+        return `<div class="pickup-calendar-day-header">${escapeHtml(day)}</div>`;
+    }).join("");
+
+    const cells = [];
+    for(let i = 0; i < startOffset; i += 1){
+        cells.push({ date: null, outsideMonth: true });
+    }
+    for(let day = 1; day <= totalDays; day += 1){
+        cells.push({ date: new Date(year, month, day), outsideMonth: false });
+    }
+    while(cells.length % 7 !== 0){
+        cells.push({ date: null, outsideMonth: true });
+    }
+
+    const calendarHtml = cells.map(function(cell){
+        if(!cell.date){
+            return '<div class="pickup-calendar-cell outside-month"></div>';
+        }
+        const dateIso = cell.date.toISOString().slice(0, 10);
+        const items = scheduleItems.filter(function(request){
+            return request.scheduled_pickup_date === dateIso;
+        });
+        const itemsHtml = items.map(function(request){
+            const requestIndex = requests.indexOf(request);
+            const driverName = getRequestAssignedDriver(request) ? `Driver: ${getRequestAssignedDriver(request)}` : "Driver: Unassigned";
+            const timeText = formatScheduleTimeValue(request.scheduled_pickup_time || "");
+            const customerName = getRequestSummaryLabel(request);
+            const address = request.delivery && request.delivery.pickupAddress ? request.delivery.pickupAddress : "Pickup";
+            return `<div class="pickup-calendar-item" data-schedule-request-index="${requestIndex}" title="${escapeHtml(customerName)}">` +
+                `<strong>${escapeHtml(timeText)}</strong>` +
+                `${escapeHtml(customerName)}<br>${escapeHtml(address)}<br>${escapeHtml(driverName)}` +
+                `</div>`;
+        }).join("");
+
+        const isToday = new Date().toDateString() === cell.date.toDateString();
+        return `<div class="pickup-calendar-cell ${cell.outsideMonth ? "outside-month" : ""} ${isToday ? "today" : ""}"><div class="pickup-calendar-date">${cell.date.getDate()}</div>${itemsHtml}</div>`;
+    }).join("");
+
+    calendar.innerHTML = headerHtml + calendarHtml;
+
+    const scheduleItemsInCalendar = calendar.querySelectorAll(".pickup-calendar-item");
+    scheduleItemsInCalendar.forEach(function(item){
+        item.addEventListener("click", function(){
+            const index = Number(item.getAttribute("data-schedule-request-index"));
+            if(Number.isFinite(index) && index >= 0){
+                openScheduleModal(index);
+                const card = document.querySelector(`.request-card[data-index="${index}"]`);
+                if(card){
+                    card.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }
+        });
+    });
+}
+
+function bindCalendarDrawerEvents(){
+    const toggleButton = document.getElementById("floatingCalendarToggle");
+    const drawer = document.getElementById("calendarDrawer");
+    const closeButton = document.getElementById("calendarDrawerClose");
+    if(!toggleButton || !drawer){
+        return;
+    }
+
+    if(toggleButton.dataset.bound === "true"){
+        return;
+    }
+
+    toggleButton.dataset.bound = "true";
+
+    toggleButton.addEventListener("click", function(){
+        const willOpen = drawer.classList.contains("hidden");
+        drawer.classList.toggle("hidden", !willOpen);
+        drawer.setAttribute("aria-hidden", willOpen ? "false" : "true");
+        if(willOpen){
+            renderPickupCalendar();
+        }
+    });
+
+    if(closeButton){
+        closeButton.addEventListener("click", function(){
+            drawer.classList.add("hidden");
+            drawer.setAttribute("aria-hidden", "true");
+        });
+    }
+
+    document.addEventListener("click", function(event){
+        if(!drawer.classList.contains("hidden") && !drawer.contains(event.target) && !toggleButton.contains(event.target)){
+            drawer.classList.add("hidden");
+            drawer.setAttribute("aria-hidden", "true");
+        }
+    });
+}
+
+function attachCalendarControls(){
+    const prevButton = document.getElementById("pickupCalendarPrev");
+    const nextButton = document.getElementById("pickupCalendarNext");
+    if(!prevButton || !nextButton){
+        return;
+    }
+
+    prevButton.onclick = function(){
+        window.DasherLabDashboardSchedule = window.DasherLabDashboardSchedule || {};
+        const monthDate = window.DasherLabDashboardSchedule.currentMonth || new Date();
+        const prevMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1);
+        window.DasherLabDashboardSchedule.currentMonth = prevMonth;
+        renderPickupCalendar();
+    };
+
+    nextButton.onclick = function(){
+        window.DasherLabDashboardSchedule = window.DasherLabDashboardSchedule || {};
+        const monthDate = window.DasherLabDashboardSchedule.currentMonth || new Date();
+        const nextMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1);
+        window.DasherLabDashboardSchedule.currentMonth = nextMonth;
+        renderPickupCalendar();
+    };
+}
+
+function bindScheduleModalEvents(){
+    const modal = document.getElementById("pickupScheduleModal");
+    if(!modal || modal.dataset.bound === "true"){
+        return;
+    }
+    modal.dataset.bound = "true";
+
+    modal.addEventListener("click", function(event){
+        const closeTarget = event.target.closest("[data-close-schedule-modal]");
+        if(closeTarget){
+            closeScheduleModal();
+        }
+    });
+
+    const form = document.getElementById("schedulePickupForm");
+    if(form){
+        form.addEventListener("submit", savePickupSchedule);
+    }
+
+    const clearButton = document.getElementById("clearScheduleButton");
+    if(clearButton){
+        clearButton.addEventListener("click", clearPickupSchedule);
+    }
 }
 
 function getRequestDetailHtml(request){
@@ -783,6 +1335,61 @@ function getRequestDetailHtml(request){
     const deliveryPhone = (request && request.pickup && request.pickup.deliveryPhone) || (request && request.deliveryPhone) || "Not provided";
     const scheduleDate = (request && request.delivery && request.delivery.pickupDate) || (request && request.date) || "Not provided";
     const scheduleTime = (request && request.delivery && request.delivery.pickupTime) || (request && request.time) || "Not provided";
+    const quoteReference = request && request.quoteReference ? request.quoteReference : "Not provided";
+    const quoteMileage = request && request.quote && typeof request.quote.mileage === "number" ? request.quote.mileage + " miles" : "Not provided";
+    const quotePriority = request && request.quote && request.quote.priority ? request.quote.priority : getRequestPriority(request);
+    const quoteRequestedDate = request && request.quote && request.quote.requestedDate ? request.quote.requestedDate : "Not provided";
+
+    if(request && request.sourceType === "contact"){
+        const contactName = request && request.name ? request.name : customerName;
+        return `
+            <div class="request-details-grid">
+                <div>
+                    <h4>Contact Information</h4>
+                    <p><strong>Name:</strong> ${contactName}</p>
+                    <p><strong>Email:</strong> ${email}</p>
+                    <p><strong>Phone:</strong> ${phone}</p>
+                </div>
+                <div>
+                    <h4>Request Details</h4>
+                    <p><strong>Type:</strong> ${getRequestService(request)}</p>
+                    <p><strong>Priority:</strong> ${getRequestPriority(request)}</p>
+                    <p><strong>Status:</strong> ${getRequestStatus(request)}</p>
+                </div>
+                <div>
+                    <h4>Message</h4>
+                    <p>${getRequestNotes(request)}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    if(request && request.sourceType === "quote"){
+        return `
+            <div class="request-details-grid">
+                <div>
+                    <h4>Route Details</h4>
+                    <p><strong>Pickup address:</strong> ${pickupAddress}</p>
+                    <p><strong>Delivery address:</strong> ${deliveryAddress}</p>
+                    <p><strong>Mileage:</strong> ${quoteMileage}</p>
+                </div>
+                <div>
+                    <h4>Quote Details</h4>
+                    <p><strong>Reference:</strong> ${quoteReference}</p>
+                    <p><strong>Service type:</strong> ${serviceLevel}</p>
+                    <p><strong>Priority:</strong> ${quotePriority}</p>
+                    <p><strong>Estimated total:</strong> ${request && request.quote && request.quote.estimatedTotal ? "$" + Number(request.quote.estimatedTotal).toLocaleString() : "Pending review"}</p>
+                    <p><strong>Status:</strong> ${getRequestStatus(request)}</p>
+                </div>
+                <div>
+                    <h4>Scheduling</h4>
+                    <p><strong>Requested date:</strong> ${quoteRequestedDate}</p>
+                    <p><strong>Submitted:</strong> ${getRequestCreatedAt(request)}</p>
+                    <p><strong>Notes:</strong> ${getRequestNotes(request)}</p>
+                </div>
+            </div>
+        `;
+    }
 
     return `
         <div class="request-details-grid">
@@ -834,9 +1441,130 @@ function toggleRequestDetails(index){
     }
 }
 
+function getActiveRequestTypeFilter(){
+    const activeTab = document.querySelector('.request-type-tab.active');
+    return activeTab ? activeTab.getAttribute('data-request-type') : 'pickup';
+}
+
 function getDashboardRequestFilter(){
-    const activeTab = document.querySelector('.request-tab.active');
+    const activeTab = document.querySelector('.request-status-tab.active');
     return activeTab && activeTab.getAttribute('data-filter') === 'completed' ? 'completed' : 'active';
+}
+
+function getRequestTypeKey(request){
+    if(!request){
+        return 'pickup';
+    }
+    if(request.sourceType === 'quote'){
+        return 'quote';
+    }
+    if(request.sourceType === 'contact'){
+        return 'contact';
+    }
+    return 'pickup';
+}
+
+function getRequestDateForGrouping(request){
+    if(!request){
+        return '';
+    }
+
+    if(request.sourceType === 'pickup'){
+        return request.delivery && request.delivery.pickupDate ? request.delivery.pickupDate : (request.pickup_date || request.pickupDate || request.createdAt || '');
+    }
+
+    if(request.sourceType === 'quote'){
+        return request.quote && request.quote.requestedDate ? request.quote.requestedDate : (request.delivery && request.delivery.pickupDate ? request.delivery.pickupDate : request.createdAt || '');
+    }
+
+    return request.createdAt || '';
+}
+
+function getRequestTimeForGrouping(request){
+    if(!request){
+        return '';
+    }
+
+    if(request.sourceType === 'pickup'){
+        return request.delivery && request.delivery.pickupTime ? request.delivery.pickupTime : (request.pickup_time || request.pickupTime || '');
+    }
+
+    return '';
+}
+
+function timeToMinutes(value){
+    if(!value){
+        return 86400;
+    }
+
+    const raw = String(value).trim();
+    const ampmMatch = raw.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if(ampmMatch){
+        let hour = Number(ampmMatch[1]);
+        const minute = Number(ampmMatch[2]);
+        const meridian = ampmMatch[3].toUpperCase();
+        if(meridian === 'AM' && hour === 12){ hour = 0; }
+        if(meridian === 'PM' && hour < 12){ hour += 12; }
+        return hour * 60 + minute;
+    }
+
+    const match = raw.match(/(\d{1,2}):(\d{2})/);
+    if(match){
+        return Number(match[1]) * 60 + Number(match[2]);
+    }
+
+    return 86400;
+}
+
+function buildRequestGroups(requests){
+    const monthMap = new Map();
+    const noDate = [];
+
+    requests.forEach(function(request){
+        const dateValue = getRequestDateForGrouping(request);
+        if(!dateValue){
+            noDate.push(request);
+            return;
+        }
+
+        const parsedDate = new Date(dateValue.includes('T') ? dateValue : dateValue + 'T00:00:00');
+        if(Number.isNaN(parsedDate.getTime())){
+            noDate.push(request);
+            return;
+        }
+
+        const monthKey = parsedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        const dayKey = parsedDate.toISOString().slice(0, 10);
+
+        if(!monthMap.has(monthKey)){
+            monthMap.set(monthKey, { key: monthKey, sort: new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1).getTime(), days: new Map() });
+        }
+
+        const monthEntry = monthMap.get(monthKey);
+        if(!monthEntry.days.has(dayKey)){
+            monthEntry.days.set(dayKey, { key: dayKey, sort: parsedDate.getTime(), items: [] });
+        }
+
+        monthEntry.days.get(dayKey).items.push(request);
+    });
+
+    const monthEntries = Array.from(monthMap.values()).sort(function(left, right){
+        return left.sort - right.sort;
+    }).map(function(monthEntry){
+        const days = Array.from(monthEntry.days.values()).sort(function(left, right){
+            return left.sort - right.sort;
+        }).map(function(dayEntry){
+            dayEntry.items.sort(function(left, right){
+                const leftTime = timeToMinutes(getRequestTimeForGrouping(left));
+                const rightTime = timeToMinutes(getRequestTimeForGrouping(right));
+                return leftTime - rightTime;
+            });
+            return dayEntry;
+        });
+        return { ...monthEntry, days };
+    });
+
+    return { monthEntries, noDate };
 }
 
 function renderDashboardRequests(requests){
@@ -846,98 +1574,437 @@ function renderDashboardRequests(requests){
     }
 
     const filter = getDashboardRequestFilter();
+    const requestTypeFilter = getActiveRequestTypeFilter();
     const visibleRequests = requests.filter(function (request) {
         const status = getRequestStatus(request);
+        const typeMatch = requestTypeFilter === 'all' || getRequestTypeKey(request) === requestTypeFilter;
         if (filter === 'completed') {
-            return status === 'Completed';
+            return typeMatch && status === 'Completed';
         }
-        return status !== 'Completed';
+        return typeMatch && status !== 'Completed';
     });
 
     if(visibleRequests.length === 0){
         requestList.innerHTML = `
             <div class="empty-state">
-                <h3>No ${filter === 'completed' ? 'completed' : 'active or pending'} requests yet</h3>
+                <h3>No ${requestTypeFilter === 'pickup' ? 'pickup' : requestTypeFilter === 'quote' ? 'quote' : 'contact'} ${filter === 'completed' ? 'completed' : 'active or pending'} requests yet</h3>
                 <p>${filter === 'completed' ? 'Completed requests will appear here once they are marked complete.' : 'Active and pending requests will appear here as they come in.'}</p>
             </div>
         `;
         return;
     }
 
-    requestList.innerHTML = "";
+    const groups = buildRequestGroups(visibleRequests);
+    const currentMonthLabel = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const currentDayKey = new Date().toISOString().slice(0, 10);
 
-    visibleRequests.forEach((request, visibleIndex)=>{
-        const originalIndex = requests.indexOf(request);
-        const status = getRequestStatus(request);
-        const statusClass = getRequestStatusClass(status);
-        const trackingId = getRequestTrackingNumber(request);
-        const quoteSummary = request && request.quote ? `
-            <div class="quote-summary">
-                <p><strong>Estimated total:</strong> ${request.quote.estimatedTotal ? "$" + request.quote.estimatedTotal.toLocaleString() : "Pending review"}</p>
-                <p><strong>Timeline:</strong> ${request.quote.timeline || "Pending review"}</p>
-            </div>
-        ` : "";
-
-        requestList.innerHTML += `
-            <article class="request-card" data-index="${originalIndex}">
-                <div class="request-card-header">
-                    <div>
-                        <h3>${getRequestTitle(request)}</h3>
-                        <p class="request-subtitle">${getRequestService(request)}</p>
+    const monthHtml = groups.monthEntries.map(function(monthEntry, monthIndex){
+        const thisMonthExpanded = monthIndex === 0 || monthEntry.key === currentMonthLabel;
+        const dayHtml = monthEntry.days.map(function(dayEntry, dayIndex){
+            const thisDayExpanded = dayIndex === 0 || dayEntry.key === currentDayKey;
+            const dayItems = dayEntry.items.map(function(request){
+                const originalIndex = requests.indexOf(request);
+                const status = getRequestStatus(request);
+                const statusClass = getRequestStatusClass(status);
+                const trackingId = getRequestTrackingNumber(request);
+                const quoteSummary = request && request.quote ? `
+                    <div class="quote-summary">
+                        <p><strong>Reference:</strong> ${request.quoteReference || "Not provided"}</p>
+                        <p><strong>Estimated total:</strong> ${request.quote.estimatedTotal ? "$" + request.quote.estimatedTotal.toLocaleString() : "Pending review"}</p>
+                        <p><strong>Priority:</strong> ${request.quote.priority || getRequestPriority(request)}</p>
+                        <p><strong>Requested date:</strong> ${request.quote.requestedDate || "Not provided"}</p>
                     </div>
-                    <span class="status-pill ${statusClass}">${status}</span>
+                ` : "";
+
+                const requestMetaHtml = request && request.sourceType === "quote"
+                    ? `
+                        <div class="request-meta">
+                            <div><strong>Created</strong><br>${getRequestCreatedAt(request)}</div>
+                            <div><strong>Service</strong><br>${getRequestService(request)}</div>
+                        </div>
+                    `
+                    : `
+                        <div class="request-meta">
+                            <div><strong>Created</strong><br>${getRequestCreatedAt(request)}</div>
+                            <div><strong>Contact</strong><br>${getRequestContact(request)}</div>
+                        </div>
+                    `;
+
+                const scheduleSummary = request && request.sourceType === "pickup" && (getRequestScheduleDate(request) || getRequestScheduleTime(request) || getRequestAssignedDriver(request))
+                    ? `<div class="quote-summary"><p><strong>Scheduled:</strong> ${formatScheduleDateValue(getRequestScheduleDate(request))} ${getRequestScheduleTime(request) ? "at " + formatScheduleTimeValue(getRequestScheduleTime(request)) : ""}</p><p><strong>Driver:</strong> ${getRequestAssignedDriver(request) || "Unassigned"}</p></div>`
+                    : "";
+
+                return `
+                    <article class="request-card" data-index="${originalIndex}">
+                        <div class="request-card-header">
+                            <div>
+                                <h3>${getRequestTitle(request)}</h3>
+                                <p class="request-subtitle">${getRequestService(request)}</p>
+                            </div>
+                            <span class="status-pill ${statusClass}">${status}</span>
+                        </div>
+
+                        <div class="request-status-row">
+                            <label class="request-status-label" for="requestStatus-${originalIndex}">Status</label>
+                            <select class="request-status-select ${statusClass}" id="requestStatus-${originalIndex}" onchange="updateRequestStatusFromSelect(${originalIndex}, this.value)">
+                                <option value="Awaiting Dispatch" ${status === "Awaiting Dispatch" ? "selected" : ""}>Awaiting Dispatch</option>
+                                <option value="Active" ${status === "Active" ? "selected" : ""}>Active</option>
+                                <option value="Completed" ${status === "Completed" ? "selected" : ""}>Completed</option>
+                            </select>
+                        </div>
+
+                        <div class="request-tracking">Tracking Number<br><strong>${trackingId}</strong></div>
+
+                        ${requestMetaHtml}
+
+                        ${quoteSummary}
+                        ${scheduleSummary}
+
+                        <div class="request-actions">
+                            <a class="request-link" href="pages/tracking-status.html">Track Request</a>
+                            ${request && request.sourceType === "pickup" ? `<button type="button" class="schedule-pickup-button" onclick="openScheduleModal(${originalIndex})">${getRequestScheduleDate(request) || getRequestScheduleTime(request) ? "Edit Schedule" : "Schedule Pickup"}</button>` : ""}
+                            <button type="button" class="request-toggle" onclick="toggleRequestDetails(${originalIndex})">Show More</button>
+                        </div>
+
+                        <div class="request-details">
+                            ${getRequestDetailHtml(request)}
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            return `
+                <div class="date-group day-group ${thisDayExpanded ? 'expanded' : ''}" data-group-type="day" data-group-key="${dayEntry.key}">
+                    <button type="button" class="date-group-toggle" data-group-target="day-${dayEntry.key}">
+                        <span>${new Date(dayEntry.key + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span class="date-group-count">${dayEntry.items.length}</span>
+                    </button>
+                    <div class="date-group-body">
+                        ${dayItems}
+                    </div>
                 </div>
+            `;
+        }).join('');
 
-                <div class="request-status-row">
-                    <label class="request-status-label" for="requestStatus-${originalIndex}">Status</label>
-                    <select class="request-status-select ${statusClass}" id="requestStatus-${originalIndex}" onchange="updateRequestStatusFromSelect(${originalIndex}, this.value)">
-                        <option value="Awaiting Dispatch" ${status === "Awaiting Dispatch" ? "selected" : ""}>Awaiting Dispatch</option>
-                        <option value="Active" ${status === "Active" ? "selected" : ""}>Active</option>
-                        <option value="Completed" ${status === "Completed" ? "selected" : ""}>Completed</option>
-                    </select>
+        return `
+            <div class="date-group month-group ${thisMonthExpanded ? 'expanded' : ''}" data-group-type="month" data-group-key="${monthEntry.key}">
+                <button type="button" class="date-group-toggle" data-group-target="month-${monthEntry.key}">
+                    <span>${monthEntry.key}</span>
+                    <span class="date-group-count">${monthEntry.days.reduce(function(total, dayEntry){ return total + dayEntry.items.length; }, 0)}</span>
+                </button>
+                <div class="date-group-body">
+                    ${dayHtml}
                 </div>
-
-                <div class="request-tracking">Tracking Number<br><strong>${trackingId}</strong></div>
-
-                <div class="request-meta">
-                    <div><strong>Created</strong><br>${getRequestCreatedAt(request)}</div>
-                    <div><strong>Contact</strong><br>${getRequestContact(request)}</div>
-                </div>
-
-                ${quoteSummary}
-
-                <div class="request-actions">
-                    <a class="request-link" href="pages/tracking-status.html">Track Request</a>
-                    <button type="button" class="request-toggle" onclick="toggleRequestDetails(${originalIndex})">Show More</button>
-                </div>
-
-                <div class="request-details">
-                    ${getRequestDetailHtml(request)}
-                </div>
-            </article>
+            </div>
         `;
+    }).join('');
+
+    const noDateHtml = groups.noDate.length ? `
+        <div class="date-group month-group expanded" data-group-type="no-date" data-group-key="no-date">
+            <button type="button" class="date-group-toggle" data-group-target="no-date">
+                <span>No Date</span>
+                <span class="date-group-count">${groups.noDate.length}</span>
+            </button>
+            <div class="date-group-body">
+                ${groups.noDate.map(function(request){
+                    const originalIndex = requests.indexOf(request);
+                    const status = getRequestStatus(request);
+                    const statusClass = getRequestStatusClass(status);
+                    const trackingId = getRequestTrackingNumber(request);
+                    const quoteSummary = request && request.quote ? `
+                        <div class="quote-summary">
+                            <p><strong>Reference:</strong> ${request.quoteReference || "Not provided"}</p>
+                            <p><strong>Estimated total:</strong> ${request.quote.estimatedTotal ? "$" + request.quote.estimatedTotal.toLocaleString() : "Pending review"}</p>
+                            <p><strong>Priority:</strong> ${request.quote.priority || getRequestPriority(request)}</p>
+                            <p><strong>Requested date:</strong> ${request.quote.requestedDate || "Not provided"}</p>
+                        </div>
+                    ` : "";
+
+                    const requestMetaHtml = request && request.sourceType === "quote"
+                        ? `
+                            <div class="request-meta">
+                                <div><strong>Created</strong><br>${getRequestCreatedAt(request)}</div>
+                                <div><strong>Service</strong><br>${getRequestService(request)}</div>
+                            </div>
+                        `
+                        : `
+                            <div class="request-meta">
+                                <div><strong>Created</strong><br>${getRequestCreatedAt(request)}</div>
+                                <div><strong>Contact</strong><br>${getRequestContact(request)}</div>
+                            </div>
+                        `;
+
+                    const scheduleSummary = request && request.sourceType === "pickup" && (getRequestScheduleDate(request) || getRequestScheduleTime(request) || getRequestAssignedDriver(request))
+                        ? `<div class="quote-summary"><p><strong>Scheduled:</strong> ${formatScheduleDateValue(getRequestScheduleDate(request))} ${getRequestScheduleTime(request) ? "at " + formatScheduleTimeValue(getRequestScheduleTime(request)) : ""}</p><p><strong>Driver:</strong> ${getRequestAssignedDriver(request) || "Unassigned"}</p></div>`
+                        : "";
+
+                    return `
+                        <article class="request-card" data-index="${originalIndex}">
+                            <div class="request-card-header">
+                                <div>
+                                    <h3>${getRequestTitle(request)}</h3>
+                                    <p class="request-subtitle">${getRequestService(request)}</p>
+                                </div>
+                                <span class="status-pill ${statusClass}">${status}</span>
+                            </div>
+
+                            <div class="request-status-row">
+                                <label class="request-status-label" for="requestStatus-${originalIndex}">Status</label>
+                                <select class="request-status-select ${statusClass}" id="requestStatus-${originalIndex}" onchange="updateRequestStatusFromSelect(${originalIndex}, this.value)">
+                                    <option value="Awaiting Dispatch" ${status === "Awaiting Dispatch" ? "selected" : ""}>Awaiting Dispatch</option>
+                                    <option value="Active" ${status === "Active" ? "selected" : ""}>Active</option>
+                                    <option value="Completed" ${status === "Completed" ? "selected" : ""}>Completed</option>
+                                </select>
+                            </div>
+
+                            <div class="request-tracking">Tracking Number<br><strong>${trackingId}</strong></div>
+
+                            ${requestMetaHtml}
+
+                            ${quoteSummary}
+                            ${scheduleSummary}
+
+                            <div class="request-actions">
+                                <a class="request-link" href="pages/tracking-status.html">Track Request</a>
+                                ${request && request.sourceType === "pickup" ? `<button type="button" class="schedule-pickup-button" onclick="openScheduleModal(${originalIndex})">${getRequestScheduleDate(request) || getRequestScheduleTime(request) ? "Edit Schedule" : "Schedule Pickup"}</button>` : ""}
+                                <button type="button" class="request-toggle" onclick="toggleRequestDetails(${originalIndex})">Show More</button>
+                            </div>
+
+                            <div class="request-details">
+                                ${getRequestDetailHtml(request)}
+                            </div>
+                        </article>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    ` : '';
+
+    requestList.innerHTML = `${monthHtml}${noDateHtml}`;
+
+    document.querySelectorAll('.date-group-toggle').forEach(function(button){
+        button.addEventListener('click', function(){
+            const parent = button.closest('.date-group');
+            if(parent){
+                parent.classList.toggle('expanded');
+            }
+        });
     });
 }
 
 function attachRequestFilterHandlers(){
-    document.querySelectorAll('.request-tab').forEach(function (tab) {
+    document.querySelectorAll('.request-status-tab').forEach(function (tab) {
         tab.addEventListener('click', function () {
-            document.querySelectorAll('.request-tab').forEach(function (item) {
+            document.querySelectorAll('.request-status-tab').forEach(function (item) {
                 item.classList.remove('active');
                 item.setAttribute('aria-selected', 'false');
             });
             tab.classList.add('active');
             tab.setAttribute('aria-selected', 'true');
-            const requests = JSON.parse(localStorage.getItem("requests") || "[]");
+            const requests = Array.isArray(window.dashboardRequestsCache)
+                ? window.dashboardRequestsCache
+                : JSON.parse(localStorage.getItem("requests") || "[]");
+            renderDashboardRequests(requests);
+        });
+    });
+
+    document.querySelectorAll('.request-type-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            document.querySelectorAll('.request-type-tab').forEach(function (item) {
+                item.classList.remove('active');
+                item.setAttribute('aria-selected', 'false');
+            });
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            const requests = Array.isArray(window.dashboardRequestsCache)
+                ? window.dashboardRequestsCache
+                : JSON.parse(localStorage.getItem("requests") || "[]");
             renderDashboardRequests(requests);
         });
     });
 }
 
-function loadDashboard(){
+async function getOwnerDashboardBusinessId(){
+    if(!window.supabaseClient || !window.supabaseClient.auth){
+        return null;
+    }
+
+    const sessionResult = await window.supabaseClient.auth.getSession();
+    const session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
+    if(!session || !session.user || !session.user.id){
+        return null;
+    }
+
+    const userResult = await window.supabaseClient
+        .from("users")
+        .select("business_id")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+    if(userResult.error || !userResult.data || !userResult.data.business_id){
+        return null;
+    }
+
+    return userResult.data.business_id;
+}
+
+function mapSupabaseQuoteToDashboardRequest(quote){
+    return {
+        sourceType: "quote",
+        sourceTable: "quotes",
+        sourceId: quote.id,
+        type: "Quote Request",
+        status: quote.status || "Awaiting Review",
+        createdAt: quote.created_at || new Date().toISOString(),
+        quoteId: quote.id,
+        quoteReference: quote.reference || "",
+        customer: {
+            customerName: quote.customer_name || "Not provided",
+            companyName: quote.company_name || "Not provided",
+            email: quote.customer_email || "Not provided",
+            phoneNumber: quote.customer_phone || "Not provided"
+        },
+        delivery: {
+            pickupAddress: quote.pickup_address || "Not provided",
+            deliveryAddress: quote.delivery_address || "Not provided",
+            serviceLevel: quote.service_type || "Not specified",
+            mileage: typeof quote.mileage === "number" ? quote.mileage : null,
+            notes: quote.notes || "",
+            pickupDate: quote.requested_date || ""
+        },
+        service: quote.service_type || "Not specified",
+        priority: quote.priority || "Standard",
+        quote: {
+            estimatedTotal: typeof quote.estimated_total === "number" ? quote.estimated_total : null,
+            mileage: typeof quote.mileage === "number" ? quote.mileage : null,
+            priority: quote.priority || "Standard",
+            requestedDate: quote.requested_date || "Not provided",
+            timeline: "Pending review"
+        }
+    };
+}
+
+function mapSupabasePickupToDashboardRequest(pickup){
+    return {
+        sourceType: "pickup",
+        sourceTable: "pickup_requests",
+        sourceId: pickup.id,
+        trackingId: pickup.tracking_number || "",
+        type: "Pickup Request",
+        status: pickup.status || "Awaiting Dispatch",
+        createdAt: pickup.created_at || new Date().toISOString(),
+        scheduled_pickup_date: pickup.scheduled_pickup_date || null,
+        scheduled_pickup_time: pickup.scheduled_pickup_time || null,
+        assigned_driver: pickup.assigned_driver || null,
+        customer: {
+            customerName: pickup.customer_name || "Not provided",
+            companyName: pickup.business_name || "Not provided",
+            email: pickup.email || "Not provided",
+            phoneNumber: pickup.phone || "Not provided"
+        },
+        pickup: {
+            packageType: pickup.package_type || "Not provided",
+            pickupFacility: pickup.pickup_facility || "Not provided",
+            pickupContact: pickup.pickup_contact || "Not provided",
+            pickupPhone: pickup.pickup_phone || "Not provided",
+            deliveryFacility: pickup.delivery_facility || "Not provided",
+            deliveryContact: pickup.delivery_contact || "Not provided",
+            deliveryPhone: pickup.delivery_phone || "Not provided"
+        },
+        delivery: {
+            pickupAddress: pickup.pickup_address || "Not provided",
+            deliveryAddress: pickup.delivery_address || "Not provided",
+            serviceLevel: pickup.service_type || "Not specified",
+            deliveryType: pickup.priority || pickup.service_type || "Standard",
+            pickupDate: pickup.pickup_date || "",
+            pickupTime: pickup.pickup_time || "",
+            notes: pickup.notes || ""
+        },
+        service: pickup.service_type || "Not specified",
+        priority: pickup.priority || "Standard"
+    };
+}
+
+function mapSupabaseContactToDashboardRequest(contact){
+    const requestType = contact.request_type || "contact_dispatch";
+    const requestTypeLabel = requestType === "emergency_dispatch"
+        ? "Emergency Dispatch"
+        : requestType === "general_contact"
+            ? "General Contact"
+            : "Contact Dispatch";
+
+    return {
+        sourceType: "contact",
+        sourceTable: "contact_requests",
+        sourceId: contact.id,
+        type: "Human Follow-Up",
+        requestTypeLabel: requestTypeLabel,
+        name: contact.name || "Not provided",
+        email: contact.email || "Not provided",
+        phone: contact.phone || "Not provided",
+        message: contact.message || "",
+        priority: contact.priority || "Standard",
+        status: contact.status || "Needs Review",
+        createdAt: contact.created_at || new Date().toISOString()
+    };
+}
+
+async function fetchSupabaseDashboardRequests(){
+    const businessId = await getOwnerDashboardBusinessId();
+    if(!businessId){
+        return null;
+    }
+
+    const [pickupResult, quoteResult, contactResult] = await Promise.all([
+        window.supabaseClient
+            .from("pickup_requests")
+            .select("id, tracking_number, customer_name, business_name, email, phone, pickup_facility, pickup_address, pickup_contact, pickup_phone, delivery_facility, delivery_address, delivery_contact, delivery_phone, pickup_date, pickup_time, scheduled_pickup_date, scheduled_pickup_time, assigned_driver, service_type, priority, package_type, notes, status, created_at")
+            .eq("business_id", businessId)
+            .order("created_at", { ascending: false })
+            .limit(150),
+        window.supabaseClient
+            .from("quotes")
+            .select("id, reference, pickup_address, delivery_address, service_type, mileage, priority, estimated_total, requested_date, notes, status, created_at")
+            .eq("business_id", businessId)
+            .order("created_at", { ascending: false })
+            .limit(150),
+        window.supabaseClient
+            .from("contact_requests")
+            .select("id, name, phone, email, message, request_type, priority, status, created_at")
+            .eq("business_id", businessId)
+            .order("created_at", { ascending: false })
+            .limit(150)
+    ]);
+
+    if(pickupResult.error || quoteResult.error || contactResult.error){
+        return null;
+    }
+
+    const pickupRequests = (pickupResult.data || []).map(mapSupabasePickupToDashboardRequest);
+    const quoteRequests = (quoteResult.data || []).map(mapSupabaseQuoteToDashboardRequest);
+    const contactRequests = (contactResult.data || []).map(mapSupabaseContactToDashboardRequest);
+
+    return pickupRequests
+        .concat(quoteRequests)
+        .concat(contactRequests)
+        .sort(function(left, right){
+            return new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime();
+        });
+}
+
+async function loadDashboard(){
     initOwnerAveryDashboard();
 
-    const requests = JSON.parse(localStorage.getItem("requests") || "[]");
+    let requests = [];
+    const supabaseRequests = await fetchSupabaseDashboardRequests();
+    if(Array.isArray(supabaseRequests)){
+        requests = supabaseRequests;
+    } else {
+        requests = JSON.parse(localStorage.getItem("requests") || "[]");
+    }
+
+    window.dashboardRequestsCache = requests;
+    localStorage.setItem("requests", JSON.stringify(requests));
     const requestList = document.getElementById("requestList");
 
     if(!requestList){
@@ -945,6 +2012,13 @@ function loadDashboard(){
     }
 
     attachRequestFilterHandlers();
+    bindScheduleModalEvents();
+    bindCalendarDrawerEvents();
+    window.DasherLabDashboardSchedule = window.DasherLabDashboardSchedule || {};
+    if(!window.DasherLabDashboardSchedule.currentMonth){
+        window.DasherLabDashboardSchedule.currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    }
+    attachCalendarControls();
 
     if(requests.length === 0){
         requestList.innerHTML = `
@@ -959,6 +2033,7 @@ function loadDashboard(){
     }
 
     renderDashboardRequests(requests);
+    renderPickupCalendar();
     updateOverview(requests);
     renderDashboardAnalytics();
 }

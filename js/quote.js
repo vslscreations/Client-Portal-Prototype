@@ -176,7 +176,111 @@ function generateQuote(){
     nextQuoteStep(4);
 }
 
-function submitQuote(){
+let quoteSubmissionInProgress = false;
+
+function getQuoteSubmitButton(){
+    return document.querySelector('#quoteStep4 .primary-button[onclick*="submitQuote"]');
+}
+
+function clearQuoteSubmissionError(){
+    const existing = document.getElementById("quoteSubmitError");
+    if(existing){
+        existing.remove();
+    }
+}
+
+function showQuoteSubmissionError(message){
+    const step4 = document.getElementById("quoteStep4");
+    if(!step4){
+        return;
+    }
+
+    clearQuoteSubmissionError();
+
+    const error = document.createElement("p");
+    error.id = "quoteSubmitError";
+    error.className = "empty-state";
+    error.style.color = "#b42318";
+    error.style.marginTop = "14px";
+    error.textContent = message;
+    step4.appendChild(error);
+}
+
+function setQuoteSubmitState(isBusy){
+    const submitButton = getQuoteSubmitButton();
+    if(!submitButton){
+        return;
+    }
+
+    if(isBusy){
+        if(!submitButton.dataset.originalText){
+            submitButton.dataset.originalText = submitButton.textContent;
+        }
+        submitButton.disabled = true;
+        submitButton.textContent = "Submitting...";
+        submitButton.setAttribute("aria-busy", "true");
+    } else {
+        submitButton.disabled = false;
+        submitButton.textContent = submitButton.dataset.originalText || "Submit Quote Request";
+        submitButton.removeAttribute("aria-busy");
+    }
+}
+
+function buildQuoteReference(){
+    const date = new Date();
+    const y = String(date.getFullYear());
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    const t = String(date.getHours()).padStart(2, "0") + String(date.getMinutes()).padStart(2, "0") + String(date.getSeconds()).padStart(2, "0");
+    return "Q-" + y + m + d + "-" + t;
+}
+
+function buildQuoteSupabasePayload(formValues, businessId, estimate, quoteReference, createdByUserId){
+    return {
+        business_id: businessId,
+        created_by_user_id: createdByUserId || null,
+        pickup_address: formValues.pickupAddress,
+        delivery_address: formValues.deliveryAddress,
+        service_type: formValues.serviceType,
+        mileage: formValues.mileage,
+        priority: formValues.priority,
+        estimated_total: Number(estimate.estimatedTotal.toFixed(2)),
+        requested_date: formValues.requestedDate || null,
+        notes: formValues.notes || null,
+        reference: quoteReference,
+        status: "Awaiting Review"
+    };
+}
+
+async function createQuoteInSupabase(payload){
+    if(!window.supabaseClient){
+        return { ok: false, message: "Quote submission is unavailable right now. Please try again." };
+    }
+
+    const insertResult = await window.supabaseClient
+        .from("quotes")
+        .insert(payload)
+        .select("id, business_id, reference, status, created_at")
+        .maybeSingle();
+
+    if(insertResult.error){
+        return { ok: false, message: "We could not submit your quote request right now. Please review and try again.", error: insertResult.error };
+    }
+
+    if(!insertResult.data || !insertResult.data.id){
+        return { ok: false, message: "Quote submission could not be confirmed. Please try again." };
+    }
+
+    return { ok: true, record: insertResult.data };
+}
+
+async function submitQuote(){
+    if(quoteSubmissionInProgress){
+        return;
+    }
+
+    clearQuoteSubmissionError();
+
     const requiredFields = [
         document.getElementById("quoteCustomerName"),
         document.getElementById("quoteCompany"),
@@ -197,6 +301,33 @@ function submitQuote(){
         }
     }
 
+    quoteSubmissionInProgress = true;
+    setQuoteSubmitState(true);
+
+    if(!window.DasherLabClientAuth || !window.supabaseClient){
+        quoteSubmissionInProgress = false;
+        setQuoteSubmitState(false);
+        window.location.replace(resolvePortalPath("client-login.html"));
+        return;
+    }
+
+    const sessionResult = await window.supabaseClient.auth.getSession();
+    const session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
+    if(!session || !session.user || !session.user.id){
+        quoteSubmissionInProgress = false;
+        setQuoteSubmitState(false);
+        window.location.replace(resolvePortalPath("client-login.html"));
+        return;
+    }
+
+    const association = await window.DasherLabClientAuth.getClientAssociationByUserId(session.user.id);
+    if(!association || !association.ok || !association.context || !association.context.businessId){
+        quoteSubmissionInProgress = false;
+        setQuoteSubmitState(false);
+        showQuoteSubmissionError("Your account is not linked to an active business profile. Please contact support.");
+        return;
+    }
+
     const serviceType = document.getElementById("quoteService").value;
     const mileage = parseFloat(document.getElementById("quoteMileage").value) || 0;
     const priority = document.getElementById("quotePriority").value;
@@ -206,10 +337,39 @@ function submitQuote(){
     const requestedDate = document.getElementById("quoteDate").value;
     const notes = document.getElementById("quoteNotes").value.trim();
 
+    const formValues = {
+        serviceType,
+        mileage,
+        priority,
+        pickupAddress,
+        deliveryAddress,
+        requestedDate,
+        notes
+    };
+
+    const quoteReference = buildQuoteReference();
+    const supabasePayload = buildQuoteSupabasePayload(
+        formValues,
+        association.context.businessId,
+        estimate,
+        quoteReference,
+        session.user.id
+    );
+    const quoteInsert = await createQuoteInSupabase(supabasePayload);
+
+    if(!quoteInsert.ok){
+        quoteSubmissionInProgress = false;
+        setQuoteSubmitState(false);
+        showQuoteSubmissionError(quoteInsert.message);
+        return;
+    }
+
     const quoteRequest = {
         type: "Quote Request",
         status: "Awaiting Review",
         createdAt: new Date().toISOString(),
+        quoteId: quoteInsert.record.id,
+        quoteReference: quoteReference,
         createdBy: "Client Portal",
         customer: {
             customerName: document.getElementById("quoteCustomerName").value.trim(),
@@ -245,6 +405,36 @@ function submitQuote(){
     const requests = JSON.parse(localStorage.getItem("requests") || "[]");
     requests.push(quoteRequest);
     localStorage.setItem("requests", JSON.stringify(requests));
+    localStorage.setItem("latestQuoteRequest", JSON.stringify({
+        id: quoteInsert.record.id,
+        reference: quoteReference,
+        status: quoteInsert.record.status || "Awaiting Review",
+        estimatedTotal: quoteRequest.quote.estimatedTotal
+    }));
+
+    try {
+        await window.DasherLabEmailNotifications.sendRequestNotification("quote_request_submitted", {
+            eventType: "quote_request_submitted",
+            type: "quote",
+            requestType: "quote",
+            reference: quoteReference,
+            customerName: document.getElementById("quoteCustomerName").value.trim(),
+            businessName: document.getElementById("quoteCompany").value.trim(),
+            customerEmail: document.getElementById("quoteEmail").value.trim(),
+            customerPhone: document.getElementById("quotePhone").value.trim(),
+            pickupAddress: pickupAddress,
+            deliveryAddress: deliveryAddress,
+            serviceType: serviceType,
+            requestedDate: requestedDate,
+            notes: notes,
+            priority: priority,
+            estimatedTotal: Number(estimate.estimatedTotal.toFixed(2)),
+            businessId: association.context.businessId,
+            createdByUserId: session.user.id
+        });
+    } catch (error) {
+        console.warn("[quote-email] notification failed but request already saved", error);
+    }
 
     if (window.AveryMemory && typeof window.AveryMemory.savePickupRoute === "function") {
         window.AveryMemory.savePickupRoute({
@@ -259,6 +449,7 @@ function submitQuote(){
         }, quoteRequest.createdAt || "quote-request");
     }
 
+    quoteSubmissionInProgress = false;
     window.location.href = resolvePortalPath("index.html");
 }
 

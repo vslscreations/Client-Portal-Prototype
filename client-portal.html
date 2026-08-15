@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DasherLab Client Portal</title>
+    <title>Client Dashboard | DasherLab</title>
 
     <link rel="stylesheet" href="css/style.css">
     <link rel="manifest" href="manifest.json">
@@ -54,69 +54,80 @@
         </div>
     </div>
 </div>
-    <main class="home">
 
-<section class="ai-welcome">
+<main class="client-portal-dashboard" aria-label="Client dashboard">
 
-<div class="ai-avatar">
-    <img src="assets/images/avery.png" alt="Ada - Virtual Dispatch Coordinator">
-</div>
-
-    <h2>
-        Ada
-    </h2>
-
-
-    <h3>
-        Virtual Dispatch Coordinator
-    </h3>
-
-
-    <p class="powered">
-        Powered by <strong>EskoDSK AI</strong>
-    </p>
-
-
-<div class="chat-container">
-
-
-    <div class="messages" id="messages">
-
-        <div class="message avery-message">
-
-            <strong>Ada:</strong>
-
-            I can help you schedule a pickup, request a quote, or connect with customer service.
-
-        </div>
-
-
+<section class="client-context-banner" aria-live="polite">
+    <div>
+        <strong id="clientBusinessName">DasherLab</strong>
+        <p>Client Portal Dashboard</p>
     </div>
-
-
-
-    <div class="chat-box">
-
-        <input 
-        id="userInput"
-        type="text"
-        placeholder="Message Ada..."
-        >
-
-
-        <button onclick="sendMessage()">
-
-            Send
-
-        </button>
-
-    </div>
-
-
-</div>
+    <span id="clientSessionSummary" class="client-context-pill">Authenticated client</span>
 </section>
 
-    <section class="quick-actions">
+<section class="dispatch-overview client-dashboard-section client-snapshot-section" aria-labelledby="clientOverviewHeading">
+    <div class="section-header">
+        <div>
+            <h2 id="clientOverviewHeading">Dashboard Snapshot</h2>
+            <p id="clientDashboardStatus">Loading your authenticated business activity...</p>
+        </div>
+    </div>
+
+    <div class="overview-grid">
+        <div class="overview-card">
+            <h3 id="clientCustomersCount">--</h3>
+            <p>Customer Contacts</p>
+        </div>
+        <div class="overview-card">
+            <h3 id="clientPickupCount">--</h3>
+            <p>Pickup Requests</p>
+        </div>
+        <div class="overview-card">
+            <h3 id="clientQuoteCount">--</h3>
+            <p>Quote Requests</p>
+        </div>
+        <div class="overview-card">
+            <h3 id="clientOpenItemsCount">--</h3>
+            <p>Open Items</p>
+        </div>
+    </div>
+</section>
+
+<div class="client-dashboard-panels">
+    <section class="dispatch-overview client-dashboard-section" aria-labelledby="clientActivityHeading">
+        <div class="section-header">
+            <div>
+                <h2 id="clientActivityHeading">Recent Activity</h2>
+                <p>Your latest pickups and quote requests for this authenticated business.</p>
+            </div>
+        </div>
+
+        <div id="clientActivityList" class="activity-list">
+            <div class="empty-state">
+                <h3>Loading recent activity</h3>
+                <p>Checking your business activity now.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="dispatch-overview client-dashboard-section" aria-labelledby="clientContactsHeading">
+        <div class="section-header">
+            <div>
+                <h2 id="clientContactsHeading">Customer Contacts</h2>
+                <p>Recent customer records associated with your authenticated business.</p>
+            </div>
+        </div>
+
+        <div id="clientCustomerList" class="activity-list">
+            <div class="empty-state">
+                <h3>Loading customer contacts</h3>
+                <p>Looking up your business contacts now.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<section class="quick-actions quick-actions-client-home">
 
         <h3>
             Need something specific?
@@ -158,13 +169,13 @@
 
         </div>
 
-        <div class="action-card" onclick="goTo('client-portal.html')">
+        <div class="action-card" onclick="goTo('index.html')">
 
-            📊
+            🏠
 
             <div>
-                <strong>Portal Dashboard</strong>
-                <p>View business activity and customer trends</p>
+                <strong>Back To Portal Home</strong>
+                <p>Return to the standard client homepage</p>
             </div>
 
         </div>
@@ -180,7 +191,7 @@
     </footer>
 <nav class="bottom-nav">
 
-    <a href="index.html" class="active">
+    <a href="index.html">
         🏠
         <span>Home</span>
     </a>
@@ -192,7 +203,7 @@
     </a>
 
 
-    <a href="client-portal.html">
+    <a href="client-portal.html" class="active">
         📊
         <span>Dashboard</span>
     </a>

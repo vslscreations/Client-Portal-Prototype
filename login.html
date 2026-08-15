@@ -94,6 +94,13 @@
             transform: translateY(0);
         }
 
+        .login-error {
+            min-height: 1.25rem;
+            margin-top: 16px;
+            color: #b42318;
+            font-size: 0.95rem;
+        }
+
         @media (max-width: 900px) {
             .app {
                 max-width: 100%;
@@ -123,12 +130,12 @@
 
             <form id="loginForm" onsubmit="handleLogin(event)">
                 <div class="form-group">
-                    <label for="username">Username</label>
+                    <label for="email">Email</label>
                     <input 
-                        type="text" 
-                        id="username" 
-                        name="username" 
-                        placeholder="Enter your username"
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="Enter your email"
                         required
                     >
                 </div>
@@ -146,28 +153,77 @@
 
                 <button type="submit" class="login-button">Sign In</button>
             </form>
+
+            <p id="loginError" class="login-error" role="alert" aria-live="polite"></p>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="Avery/supabase.js"></script>
 <script>
-    function handleLogin(event) {
-        event.preventDefault();
-        
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        
-        if (username && password) {
-            localStorage.setItem('isLoggedIn', 'true');
-            const params = new URLSearchParams(window.location.search);
-            const nextPage = params.get('next') || 'dashboard.html';
-            window.location.href = nextPage;
+    function setLoginError(message) {
+        const errorMessage = document.getElementById('loginError');
+        if (errorMessage) {
+            errorMessage.textContent = message || '';
         }
     }
 
-    if (localStorage.getItem('isLoggedIn') === 'true') {
-        window.location.replace('dashboard.html');
+    async function handleLogin(event) {
+        event.preventDefault();
+
+        setLoginError('');
+
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!window.supabaseClient) {
+            setLoginError('Authentication is unavailable right now. Please try again.');
+            return;
+        }
+
+        if (!email || !password) {
+            setLoginError('Please enter your email and password.');
+            return;
+        }
+
+        const submitButton = event.target && event.target.querySelector('.login-button');
+        if (submitButton) {
+            submitButton.disabled = true;
+        }
+
+        try {
+            const result = await window.supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (result.error) {
+                setLoginError('Invalid email or password.');
+                return;
+            }
+
+            window.location.replace('dashboard.html');
+        } catch (error) {
+            setLoginError('Unable to sign in right now. Please try again.');
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+            }
+        }
     }
+
+    (async function redirectIfAuthenticated() {
+        if (!window.supabaseClient) {
+            return;
+        }
+
+        const sessionResult = await window.supabaseClient.auth.getSession();
+        if (sessionResult.data && sessionResult.data.session) {
+            window.location.replace('dashboard.html');
+        }
+    })();
 </script>
 
 </body>

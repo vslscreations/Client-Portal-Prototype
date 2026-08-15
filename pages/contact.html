@@ -52,6 +52,7 @@
             <a href="#" onclick="goTo('pickup.html'); toggleMenu(); return false;">Request Appointment</a>
             <a href="#" onclick="goTo('quote.html'); toggleMenu(); return false;">Request Quote</a>
             <a href="#" onclick="goTo('contact.html'); toggleMenu(); return false;">Contact Customer Service</a>
+            <a href="#" onclick="AveryActions.logout(); toggleMenu(); return false;">Sign Out</a>
         </div>
     </div>
 </div>
@@ -140,7 +141,26 @@ Send Request
 
 
 <script src="../js/navigation.js"></script>
-<script src="../js/contact.js"></script>
+<script src="../js/contact.js?v=20260811"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../Avery/supabase.js"></script>
+<script src="../js/client-auth.js"></script>
+<script>
+(async function gateClientPortal() {
+    if (!window.DasherLabClientAuth) {
+        window.location.replace("../client-login.html");
+        return;
+    }
+
+    if (typeof window.DasherLabClientAuth.guardProtectedClientRoute === "function") {
+        const routeAllowed = await window.DasherLabClientAuth.guardProtectedClientRoute();
+        if (!routeAllowed) {
+            return;
+        }
+    }
+})();
+</script>
 <script src="../js/script.js"></script>
 <script src="../Avery/actions.js"></script>
 <script src="../Avery/knowledge.js"></script>
