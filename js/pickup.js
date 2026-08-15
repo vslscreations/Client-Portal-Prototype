@@ -1,3 +1,12 @@
+function escapeHtml(value){
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 function getCurrentStepNumber(){
     const activeCard = document.querySelector(".form-card:not(.hidden)");
     if(!activeCard) return 1;
@@ -355,7 +364,7 @@ async function submitRequest(){
                 <div class="confirmation-grid">
                     <div>
                         <p class="confirmation-label">Tracking number</p>
-                        <p class="confirmation-value">${(createResult.record && createResult.record.tracking_number) || request.trackingId}</p>
+                        <p class="confirmation-value">${escapeHtml((createResult.record && createResult.record.tracking_number) || request.trackingId)}</p>
                     </div>
                     <div>
                         <p class="confirmation-label">Status</p>
@@ -365,19 +374,19 @@ async function submitRequest(){
                 ${confirmationPayload.requestId ? `
                 <div class="confirmation-address-block">
                     <p class="confirmation-label">Request ID</p>
-                    <p class="confirmation-value">${confirmationPayload.requestId}</p>
+                    <p class="confirmation-value">${escapeHtml(confirmationPayload.requestId)}</p>
                 </div>
                 ` : ""}
                 <div class="confirmation-address-block">
                     <p class="confirmation-label">Pickup address</p>
-                    <p class="confirmation-value">${request.delivery.pickupAddress}</p>
+                    <p class="confirmation-value">${escapeHtml(request.delivery.pickupAddress)}</p>
                 </div>
                 <div class="confirmation-address-block">
                     <p class="confirmation-label">Delivery address</p>
-                    <p class="confirmation-value">${request.delivery.deliveryAddress}</p>
+                    <p class="confirmation-value">${escapeHtml(request.delivery.deliveryAddress)}</p>
                 </div>
                 <p class="confirmation-link">
-                    ${routeUrl ? `<a href="${routeUrl}" target="_blank" rel="noopener">View route in Google Maps</a>` : 'Route link unavailable until both addresses are provided.'}
+                    ${routeUrl ? `<a href="${escapeHtml(routeUrl)}" target="_blank" rel="noopener">View route in Google Maps</a>` : 'Route link unavailable until both addresses are provided.'}
                 </p>
                 <div class="button-row">
                     <button class="primary-button" type="button" onclick="window.location.href = resolvePortalPath('index.html')">Return Home</button>

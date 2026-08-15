@@ -51,8 +51,7 @@ window.AveryMemory = {
             firstName: profile.firstName || existingProfile.firstName || "",
             lastName: profile.lastName || existingProfile.lastName || "",
             companyName: profile.companyName || existingProfile.companyName || "",
-            email: profile.email || existingProfile.email || "",
-            phone: profile.phone || existingProfile.phone || ""
+            email: profile.email || existingProfile.email || ""
         };
 
         this.set("avery_customer_profile", nextProfile);

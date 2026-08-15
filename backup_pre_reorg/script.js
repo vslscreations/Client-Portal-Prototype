@@ -1,3 +1,12 @@
+function escapeHtml(value){
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 function sendMessage(){
 
     const input = document.getElementById("userInput");
@@ -17,7 +26,7 @@ function sendMessage(){
 
     <div class="message user-message">
 
-        ${text}
+        ${escapeHtml(text)}
 
     </div>
 
@@ -551,26 +560,26 @@ request.type === "Human Follow-Up"
 
 :
 
-"📋 " + (request.requestType || "Service Request")
+"📋 " + escapeHtml(request.requestType || "Service Request")
 
 }
 
 </h3>
 <p>
 <strong>Business:</strong>
-${request.company || "Individual Customer"}
+${escapeHtml(request.company || "Individual Customer")}
 </p>
 
 
 <p>
 <strong>Contact:</strong>
-${request.contact}
+${escapeHtml(request.contact)}
 </p>
 
 
 <p>
 <strong>Service:</strong>
-${request.service || "Not specified"}
+${escapeHtml(request.service || "Not specified")}
 </p>
 
 ${
@@ -581,12 +590,12 @@ request.type === "Sales Opportunity"
 `
 <p>
 <strong>Budget:</strong>
-${request.budget}
+${escapeHtml(request.budget)}
 </p>
 
 <p>
 <strong>Description:</strong>
-${request.description}
+${escapeHtml(request.description)}
 </p>
 `
 
@@ -604,13 +613,13 @@ request.type === "Human Follow-Up"
 `
 <p>
 <strong>Email:</strong>
-${request.email}
+${escapeHtml(request.email)}
 </p>
 
 
 <p>
 <strong>Message:</strong>
-${request.message}
+${escapeHtml(request.message)}
 </p>
 
 
@@ -628,19 +637,19 @@ Needs Team Review
 
 <p>
 <strong>Priority:</strong>
-${request.priority}
+${escapeHtml(request.priority)}
 </p>
 
 
 <p>
 <strong>Status:</strong>
-${request.status}
+${escapeHtml(request.status)}
 </p>
 
 
 <p>
 <strong>Created By:</strong>
-${request.createdBy}
+${escapeHtml(request.createdBy)}
 </p>
 
 
