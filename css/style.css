@@ -2267,6 +2267,24 @@ grid-template-columns:1fr 1fr;
 
 }
 
+.overview-card{
+
+padding:12px 10px;
+
+}
+
+.overview-card h3{
+
+font-size:20px;
+
+}
+
+.overview-card p{
+
+font-size:0.78rem;
+
+}
+
 }
 
 .dispatch-overview h2{
