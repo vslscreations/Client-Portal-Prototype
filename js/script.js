@@ -521,7 +521,7 @@ function displayOwnerMessage(content){
 
     const message = document.createElement("div");
     message.className = "message avery-message";
-    message.innerHTML = `<strong>Ada:</strong><div>${cleanedContent}</div>`;
+    message.innerHTML = `<strong>Ada:</strong><div>${escapeHtml(cleanedContent)}</div>`;
     messages.appendChild(message);
     messages.scrollTop = messages.scrollHeight;
 }
@@ -1346,19 +1346,19 @@ function getRequestDetailHtml(request){
             <div class="request-details-grid">
                 <div>
                     <h4>Contact Information</h4>
-                    <p><strong>Name:</strong> ${contactName}</p>
-                    <p><strong>Email:</strong> ${email}</p>
-                    <p><strong>Phone:</strong> ${phone}</p>
+                    <p><strong>Name:</strong> ${escapeHtml(contactName)}</p>
+                    <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+                    <p><strong>Phone:</strong> ${escapeHtml(phone)}</p>
                 </div>
                 <div>
                     <h4>Request Details</h4>
-                    <p><strong>Type:</strong> ${getRequestService(request)}</p>
-                    <p><strong>Priority:</strong> ${getRequestPriority(request)}</p>
-                    <p><strong>Status:</strong> ${getRequestStatus(request)}</p>
+                    <p><strong>Type:</strong> ${escapeHtml(getRequestService(request))}</p>
+                    <p><strong>Priority:</strong> ${escapeHtml(getRequestPriority(request))}</p>
+                    <p><strong>Status:</strong> ${escapeHtml(getRequestStatus(request))}</p>
                 </div>
                 <div>
                     <h4>Message</h4>
-                    <p>${getRequestNotes(request)}</p>
+                    <p>${escapeHtml(getRequestNotes(request))}</p>
                 </div>
             </div>
         `;
@@ -1369,23 +1369,23 @@ function getRequestDetailHtml(request){
             <div class="request-details-grid">
                 <div>
                     <h4>Route Details</h4>
-                    <p><strong>Pickup address:</strong> ${pickupAddress}</p>
-                    <p><strong>Delivery address:</strong> ${deliveryAddress}</p>
-                    <p><strong>Mileage:</strong> ${quoteMileage}</p>
+                    <p><strong>Pickup address:</strong> ${escapeHtml(pickupAddress)}</p>
+                    <p><strong>Delivery address:</strong> ${escapeHtml(deliveryAddress)}</p>
+                    <p><strong>Mileage:</strong> ${escapeHtml(quoteMileage)}</p>
                 </div>
                 <div>
                     <h4>Quote Details</h4>
-                    <p><strong>Reference:</strong> ${quoteReference}</p>
-                    <p><strong>Service type:</strong> ${serviceLevel}</p>
-                    <p><strong>Priority:</strong> ${quotePriority}</p>
+                    <p><strong>Reference:</strong> ${escapeHtml(quoteReference)}</p>
+                    <p><strong>Service type:</strong> ${escapeHtml(serviceLevel)}</p>
+                    <p><strong>Priority:</strong> ${escapeHtml(quotePriority)}</p>
                     <p><strong>Estimated total:</strong> ${request && request.quote && request.quote.estimatedTotal ? "$" + Number(request.quote.estimatedTotal).toLocaleString() : "Pending review"}</p>
-                    <p><strong>Status:</strong> ${getRequestStatus(request)}</p>
+                    <p><strong>Status:</strong> ${escapeHtml(getRequestStatus(request))}</p>
                 </div>
                 <div>
                     <h4>Scheduling</h4>
-                    <p><strong>Requested date:</strong> ${quoteRequestedDate}</p>
-                    <p><strong>Submitted:</strong> ${getRequestCreatedAt(request)}</p>
-                    <p><strong>Notes:</strong> ${getRequestNotes(request)}</p>
+                    <p><strong>Requested date:</strong> ${escapeHtml(quoteRequestedDate)}</p>
+                    <p><strong>Submitted:</strong> ${escapeHtml(getRequestCreatedAt(request))}</p>
+                    <p><strong>Notes:</strong> ${escapeHtml(getRequestNotes(request))}</p>
                 </div>
             </div>
         `;
@@ -1395,34 +1395,34 @@ function getRequestDetailHtml(request){
         <div class="request-details-grid">
             <div>
                 <h4>Customer Information</h4>
-                <p><strong>Name:</strong> ${customerName}</p>
-                <p><strong>Business:</strong> ${businessName}</p>
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Phone:</strong> ${phone}</p>
+                <p><strong>Name:</strong> ${escapeHtml(customerName)}</p>
+                <p><strong>Business:</strong> ${escapeHtml(businessName)}</p>
+                <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+                <p><strong>Phone:</strong> ${escapeHtml(phone)}</p>
             </div>
             <div>
                 <h4>Pickup Details</h4>
-                <p><strong>Pickup address:</strong> ${pickupAddress}</p>
-                <p><strong>Pickup contact:</strong> ${pickupContact}</p>
-                <p><strong>Pickup phone:</strong> ${pickupPhone}</p>
+                <p><strong>Pickup address:</strong> ${escapeHtml(pickupAddress)}</p>
+                <p><strong>Pickup contact:</strong> ${escapeHtml(pickupContact)}</p>
+                <p><strong>Pickup phone:</strong> ${escapeHtml(pickupPhone)}</p>
             </div>
             <div>
                 <h4>Delivery Details</h4>
-                <p><strong>Delivery address:</strong> ${deliveryAddress}</p>
-                <p><strong>Delivery contact:</strong> ${deliveryContact}</p>
-                <p><strong>Delivery phone:</strong> ${deliveryPhone}</p>
+                <p><strong>Delivery address:</strong> ${escapeHtml(deliveryAddress)}</p>
+                <p><strong>Delivery contact:</strong> ${escapeHtml(deliveryContact)}</p>
+                <p><strong>Delivery phone:</strong> ${escapeHtml(deliveryPhone)}</p>
             </div>
             <div>
                 <h4>Service Details</h4>
-                <p><strong>Delivery type:</strong> ${serviceLevel}</p>
-                <p><strong>Shipment type:</strong> ${shipmentType}</p>
-                <p><strong>Special instructions:</strong> ${getRequestNotes(request)}</p>
+                <p><strong>Delivery type:</strong> ${escapeHtml(serviceLevel)}</p>
+                <p><strong>Shipment type:</strong> ${escapeHtml(shipmentType)}</p>
+                <p><strong>Special instructions:</strong> ${escapeHtml(getRequestNotes(request))}</p>
             </div>
             <div>
                 <h4>Scheduling</h4>
-                <p><strong>Date:</strong> ${scheduleDate}</p>
-                <p><strong>Time:</strong> ${scheduleTime}</p>
-                <p><strong>Notes:</strong> ${getRequestNotes(request)}</p>
+                <p><strong>Date:</strong> ${escapeHtml(scheduleDate)}</p>
+                <p><strong>Time:</strong> ${escapeHtml(scheduleTime)}</p>
+                <p><strong>Notes:</strong> ${escapeHtml(getRequestNotes(request))}</p>
             </div>
         </div>
     `;
@@ -1609,39 +1609,39 @@ function renderDashboardRequests(requests){
                 const trackingId = getRequestTrackingNumber(request);
                 const quoteSummary = request && request.quote ? `
                     <div class="quote-summary">
-                        <p><strong>Reference:</strong> ${request.quoteReference || "Not provided"}</p>
+                        <p><strong>Reference:</strong> ${escapeHtml(request.quoteReference || "Not provided")}</p>
                         <p><strong>Estimated total:</strong> ${request.quote.estimatedTotal ? "$" + request.quote.estimatedTotal.toLocaleString() : "Pending review"}</p>
-                        <p><strong>Priority:</strong> ${request.quote.priority || getRequestPriority(request)}</p>
-                        <p><strong>Requested date:</strong> ${request.quote.requestedDate || "Not provided"}</p>
+                        <p><strong>Priority:</strong> ${escapeHtml(request.quote.priority || getRequestPriority(request))}</p>
+                        <p><strong>Requested date:</strong> ${escapeHtml(request.quote.requestedDate || "Not provided")}</p>
                     </div>
                 ` : "";
 
                 const requestMetaHtml = request && request.sourceType === "quote"
                     ? `
                         <div class="request-meta">
-                            <div><strong>Created</strong><br>${getRequestCreatedAt(request)}</div>
-                            <div><strong>Service</strong><br>${getRequestService(request)}</div>
+                            <div><strong>Created</strong><br>${escapeHtml(getRequestCreatedAt(request))}</div>
+                            <div><strong>Service</strong><br>${escapeHtml(getRequestService(request))}</div>
                         </div>
                     `
                     : `
                         <div class="request-meta">
-                            <div><strong>Created</strong><br>${getRequestCreatedAt(request)}</div>
-                            <div><strong>Contact</strong><br>${getRequestContact(request)}</div>
+                            <div><strong>Created</strong><br>${escapeHtml(getRequestCreatedAt(request))}</div>
+                            <div><strong>Contact</strong><br>${escapeHtml(getRequestContact(request))}</div>
                         </div>
                     `;
 
                 const scheduleSummary = request && request.sourceType === "pickup" && (getRequestScheduleDate(request) || getRequestScheduleTime(request) || getRequestAssignedDriver(request))
-                    ? `<div class="quote-summary"><p><strong>Scheduled:</strong> ${formatScheduleDateValue(getRequestScheduleDate(request))} ${getRequestScheduleTime(request) ? "at " + formatScheduleTimeValue(getRequestScheduleTime(request)) : ""}</p><p><strong>Driver:</strong> ${getRequestAssignedDriver(request) || "Unassigned"}</p></div>`
+                    ? `<div class="quote-summary"><p><strong>Scheduled:</strong> ${escapeHtml(formatScheduleDateValue(getRequestScheduleDate(request)))} ${getRequestScheduleTime(request) ? "at " + escapeHtml(formatScheduleTimeValue(getRequestScheduleTime(request))) : ""}</p><p><strong>Driver:</strong> ${escapeHtml(getRequestAssignedDriver(request) || "Unassigned")}</p></div>`
                     : "";
 
                 return `
                     <article class="request-card" data-index="${originalIndex}">
                         <div class="request-card-header">
                             <div>
-                                <h3>${getRequestTitle(request)}</h3>
-                                <p class="request-subtitle">${getRequestService(request)}</p>
+                                <h3>${escapeHtml(getRequestTitle(request))}</h3>
+                                <p class="request-subtitle">${escapeHtml(getRequestService(request))}</p>
                             </div>
-                            <span class="status-pill ${statusClass}">${status}</span>
+                            <span class="status-pill ${statusClass}">${escapeHtml(status)}</span>
                         </div>
 
                         <div class="request-status-row">
@@ -1653,7 +1653,7 @@ function renderDashboardRequests(requests){
                             </select>
                         </div>
 
-                        <div class="request-tracking">Tracking Number<br><strong>${trackingId}</strong></div>
+                        <div class="request-tracking">Tracking Number<br><strong>${escapeHtml(trackingId)}</strong></div>
 
                         ${requestMetaHtml}
 
@@ -1713,39 +1713,39 @@ function renderDashboardRequests(requests){
                     const trackingId = getRequestTrackingNumber(request);
                     const quoteSummary = request && request.quote ? `
                         <div class="quote-summary">
-                            <p><strong>Reference:</strong> ${request.quoteReference || "Not provided"}</p>
+                            <p><strong>Reference:</strong> ${escapeHtml(request.quoteReference || "Not provided")}</p>
                             <p><strong>Estimated total:</strong> ${request.quote.estimatedTotal ? "$" + request.quote.estimatedTotal.toLocaleString() : "Pending review"}</p>
-                            <p><strong>Priority:</strong> ${request.quote.priority || getRequestPriority(request)}</p>
-                            <p><strong>Requested date:</strong> ${request.quote.requestedDate || "Not provided"}</p>
+                            <p><strong>Priority:</strong> ${escapeHtml(request.quote.priority || getRequestPriority(request))}</p>
+                            <p><strong>Requested date:</strong> ${escapeHtml(request.quote.requestedDate || "Not provided")}</p>
                         </div>
                     ` : "";
 
                     const requestMetaHtml = request && request.sourceType === "quote"
                         ? `
                             <div class="request-meta">
-                                <div><strong>Created</strong><br>${getRequestCreatedAt(request)}</div>
-                                <div><strong>Service</strong><br>${getRequestService(request)}</div>
+                                <div><strong>Created</strong><br>${escapeHtml(getRequestCreatedAt(request))}</div>
+                                <div><strong>Service</strong><br>${escapeHtml(getRequestService(request))}</div>
                             </div>
                         `
                         : `
                             <div class="request-meta">
-                                <div><strong>Created</strong><br>${getRequestCreatedAt(request)}</div>
-                                <div><strong>Contact</strong><br>${getRequestContact(request)}</div>
+                                <div><strong>Created</strong><br>${escapeHtml(getRequestCreatedAt(request))}</div>
+                                <div><strong>Contact</strong><br>${escapeHtml(getRequestContact(request))}</div>
                             </div>
                         `;
 
                     const scheduleSummary = request && request.sourceType === "pickup" && (getRequestScheduleDate(request) || getRequestScheduleTime(request) || getRequestAssignedDriver(request))
-                        ? `<div class="quote-summary"><p><strong>Scheduled:</strong> ${formatScheduleDateValue(getRequestScheduleDate(request))} ${getRequestScheduleTime(request) ? "at " + formatScheduleTimeValue(getRequestScheduleTime(request)) : ""}</p><p><strong>Driver:</strong> ${getRequestAssignedDriver(request) || "Unassigned"}</p></div>`
+                        ? `<div class="quote-summary"><p><strong>Scheduled:</strong> ${escapeHtml(formatScheduleDateValue(getRequestScheduleDate(request)))} ${getRequestScheduleTime(request) ? "at " + escapeHtml(formatScheduleTimeValue(getRequestScheduleTime(request))) : ""}</p><p><strong>Driver:</strong> ${escapeHtml(getRequestAssignedDriver(request) || "Unassigned")}</p></div>`
                         : "";
 
                     return `
                         <article class="request-card" data-index="${originalIndex}">
                             <div class="request-card-header">
                                 <div>
-                                    <h3>${getRequestTitle(request)}</h3>
-                                    <p class="request-subtitle">${getRequestService(request)}</p>
+                                    <h3>${escapeHtml(getRequestTitle(request))}</h3>
+                                    <p class="request-subtitle">${escapeHtml(getRequestService(request))}</p>
                                 </div>
-                                <span class="status-pill ${statusClass}">${status}</span>
+                                <span class="status-pill ${statusClass}">${escapeHtml(status)}</span>
                             </div>
 
                             <div class="request-status-row">
@@ -1757,7 +1757,7 @@ function renderDashboardRequests(requests){
                                 </select>
                             </div>
 
-                            <div class="request-tracking">Tracking Number<br><strong>${trackingId}</strong></div>
+                            <div class="request-tracking">Tracking Number<br><strong>${escapeHtml(trackingId)}</strong></div>
 
                             ${requestMetaHtml}
 
@@ -2113,7 +2113,7 @@ function renderDashboardAnalytics(){
     if(insightsList){
         if(insights && insights.length){
             insightsList.innerHTML = insights.map(function(insight){
-                return `<div class="activity-item"><span>✨</span><p>${insight}</p></div>`;
+                return `<div class="activity-item"><span>✨</span><p>${escapeHtml(insight)}</p></div>`;
             }).join("");
         } else {
             insightsList.innerHTML = '<p>Continue processing requests and Avery will learn your business patterns.</p>';

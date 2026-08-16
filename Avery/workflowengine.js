@@ -53,9 +53,10 @@ const AveryWorkflowEngine = {
                     ? AveryMemory.getSavedRoutes()
                     : [];
 
-                const accountName = profile.companyName ? ` ${profile.companyName}` : "";
+                const esc = typeof escapeHtml === 'function' ? escapeHtml : function(s){ return s; };
+                const accountName = profile.companyName ? ` ${esc(profile.companyName)}` : "";
                 const isPickupPage = window.location.pathname.includes('/pickup.html') || window.location.pathname.endsWith('/pickup.html');
-                let response = `Welcome back${profile.firstName ? ` ${profile.firstName}` : ""}! I found your${accountName} account.`;
+                let response = `Welcome back${profile.firstName ? ` ${esc(profile.firstName)}` : ""}! I found your${accountName} account.`;
 
                 if(savedRoutes.length){
                     response += `<br><br>I also found ${savedRoutes.length} saved route${savedRoutes.length > 1 ? "s" : ""} for you.`;

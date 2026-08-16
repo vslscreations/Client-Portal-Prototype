@@ -44,6 +44,15 @@
     <script src="../Avery/memory.js"></script>
     <script src="../Avery/tracking.js"></script>
     <script>
+        function escapeHtml(value){
+            return String(value == null ? "" : value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             const currentRequest = getLatestPickupRequest();
             const container = document.getElementById("trackingStatusContent");
@@ -60,11 +69,11 @@
             container.innerHTML = `
                 <div class="review-box">
                     <h3>${currentRequest.type === "Quote Request" ? "Quote Request" : "Pickup Request"}</h3>
-                    <p><strong>Tracking Number:</strong><br>${currentRequest.trackingId || "Not available"}</p>
-                    <p><strong>Status:</strong><br>${currentRequest.status || "Awaiting Dispatch"}</p>
-                    <p><strong>Pickup Address:</strong><br>${currentRequest.delivery && currentRequest.delivery.pickupAddress ? currentRequest.delivery.pickupAddress : "Not provided"}</p>
-                    <p><strong>Delivery Address:</strong><br>${currentRequest.delivery && currentRequest.delivery.deliveryAddress ? currentRequest.delivery.deliveryAddress : "Not provided"}</p>
-                    <p><strong>Service:</strong><br>${currentRequest.delivery && currentRequest.delivery.serviceLevel ? currentRequest.delivery.serviceLevel : "Not provided"}</p>
+                    <p><strong>Tracking Number:</strong><br>${escapeHtml(currentRequest.trackingId || "Not available")}</p>
+                    <p><strong>Status:</strong><br>${escapeHtml(currentRequest.status || "Awaiting Dispatch")}</p>
+                    <p><strong>Pickup Address:</strong><br>${escapeHtml(currentRequest.delivery && currentRequest.delivery.pickupAddress ? currentRequest.delivery.pickupAddress : "Not provided")}</p>
+                    <p><strong>Delivery Address:</strong><br>${escapeHtml(currentRequest.delivery && currentRequest.delivery.deliveryAddress ? currentRequest.delivery.deliveryAddress : "Not provided")}</p>
+                    <p><strong>Service:</strong><br>${escapeHtml(currentRequest.delivery && currentRequest.delivery.serviceLevel ? currentRequest.delivery.serviceLevel : "Not provided")}</p>
                 </div>
             `;
         });
