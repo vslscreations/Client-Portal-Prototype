@@ -521,7 +521,7 @@ function displayOwnerMessage(content){
 
     const message = document.createElement("div");
     message.className = "message avery-message";
-    message.innerHTML = `<strong>Ada:</strong><div>${cleanedContent}</div>`;
+    message.innerHTML = `<strong>Ada:</strong><div>${escapeHtml(cleanedContent)}</div>`;
     messages.appendChild(message);
     messages.scrollTop = messages.scrollHeight;
 }
@@ -2113,7 +2113,7 @@ function renderDashboardAnalytics(){
     if(insightsList){
         if(insights && insights.length){
             insightsList.innerHTML = insights.map(function(insight){
-                return `<div class="activity-item"><span>✨</span><p>${insight}</p></div>`;
+                return `<div class="activity-item"><span>✨</span><p>${escapeHtml(insight)}</p></div>`;
             }).join("");
         } else {
             insightsList.innerHTML = '<p>Continue processing requests and Avery will learn your business patterns.</p>';
