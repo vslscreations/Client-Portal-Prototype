@@ -5,3 +5,15 @@ verify_jwt = false
 
 [functions.notify-request-email]
 verify_jwt = true
+
+[functions.create-business-owner]
+verify_jwt = true
+
+[functions.create-business-client]
+verify_jwt = true
+
+[functions.invite-client]
+verify_jwt = true
+
+[functions.create-client]
+verify_jwt = true

@@ -94,11 +94,31 @@
             transform: translateY(0);
         }
 
+        .forgot-password-link {
+            display: inline-block;
+            margin-top: 14px;
+            color: #0b2e59;
+            font-size: 0.92rem;
+            text-decoration: underline;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            padding: 0;
+            font: inherit;
+        }
+
         .login-error {
             min-height: 1.25rem;
             margin-top: 16px;
             color: #b42318;
             font-size: 0.95rem;
+        }
+
+        .login-info {
+            min-height: 1.25rem;
+            margin-top: 12px;
+            color: #0b2e59;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 900px) {
@@ -154,7 +174,9 @@
                 <button type="submit" class="login-button">Sign In</button>
             </form>
 
+            <button class="forgot-password-link" type="button" onclick="handleForgotPassword()">Forgot password?</button>
             <p id="loginError" class="login-error" role="alert" aria-live="polite"></p>
+            <p id="loginInfo" class="login-info" aria-live="polite"></p>
         </div>
     </div>
 </div>
@@ -170,10 +192,62 @@
         }
     }
 
+    function setLoginInfo(message) {
+        const infoMessage = document.getElementById('loginInfo');
+        if (infoMessage) {
+            infoMessage.textContent = message || '';
+        }
+    }
+
+    function getPasswordResetRedirectUrl() {
+        const configuredBase = window.DASHERLAB_SUPABASE_CONFIG && window.DASHERLAB_SUPABASE_CONFIG.appUrl
+            ? window.DASHERLAB_SUPABASE_CONFIG.appUrl
+            : null;
+
+        const origin = configuredBase && String(configuredBase).trim()
+            ? String(configuredBase).trim().replace(/\/$/, '')
+            : (window.location && window.location.origin ? window.location.origin : 'https://dasherlab.org');
+
+        return origin.replace(/\/$/, '') + '/reset-password.html';
+    }
+
+    async function handleForgotPassword() {
+        setLoginError('');
+        setLoginInfo('');
+
+        const email = document.getElementById('email').value.trim();
+        if (!email) {
+            setLoginError('Enter your email first, then request a password reset.');
+            return;
+        }
+
+        if (!window.supabaseClient || !window.supabaseClient.auth || typeof window.supabaseClient.auth.resetPasswordForEmail !== 'function') {
+            setLoginError('Password reset is unavailable right now.');
+            return;
+        }
+
+        try {
+            const redirectUrl = getPasswordResetRedirectUrl();
+            const result = await window.supabaseClient.auth.resetPasswordForEmail(email, {
+                redirectTo: redirectUrl
+            });
+
+            if (result.error) {
+                setLoginError(result.error.message || 'Unable to send reset instructions right now.');
+                return;
+            }
+
+            setLoginInfo('Password reset instructions were sent if your email is registered.');
+        } catch (error) {
+            setLoginError('Unable to send reset instructions right now.');
+        }
+    }
+
     async function handleLogin(event) {
         event.preventDefault();
 
         setLoginError('');
+        setLoginInfo('');
 
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;

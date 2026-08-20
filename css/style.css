@@ -796,6 +796,149 @@
     margin-bottom: 2px;
 }
 
+.business-owner-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.business-owner-summary {
+    margin-top: 8px;
+    color: #5d6b7a;
+}
+
+.business-create-button {
+    margin-top: 0;
+}
+
+.business-create-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.business-create-modal.hidden,
+.business-create-success.hidden,
+#businessCreateFormSection.hidden {
+    display: none;
+}
+
+.business-create-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(12, 26, 46, 0.5);
+}
+
+.business-create-dialog {
+    position: relative;
+    width: min(560px, 100%);
+    background: white;
+    border-radius: 18px;
+    box-shadow: 0 18px 44px rgba(12, 26, 46, 0.18);
+    padding: 22px;
+}
+
+.business-create-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.business-create-kicker {
+    margin: 0;
+    color: #5d6b7a;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.business-create-header h3 {
+    margin: 4px 0 0;
+    color: #0b2f6b;
+}
+
+.business-create-close {
+    border: none;
+    background: transparent;
+    font-size: 1.4rem;
+    color: #0b2f6b;
+    cursor: pointer;
+}
+
+.business-create-form {
+    display: grid;
+    gap: 14px;
+}
+
+.business-create-field {
+    display: grid;
+    gap: 8px;
+}
+
+.business-create-field label {
+    color: #0b2f6b;
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.business-create-field input {
+    width: 100%;
+    border: 1px solid #d9e0ea;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font: inherit;
+    color: #1a2d40;
+    background: white;
+}
+
+.business-create-feedback {
+    min-height: 1.25rem;
+    margin: 4px 0 0;
+    color: #b42318;
+    font-size: 0.92rem;
+}
+
+.business-create-feedback.success {
+    color: #107a4d;
+}
+
+.business-create-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.business-create-summary {
+    background: #f7fafd;
+    border: 1px solid #e5edf7;
+    border-radius: 12px;
+    padding: 16px;
+    color: #35506d;
+    margin-bottom: 16px;
+    display: grid;
+    gap: 8px;
+}
+
+.business-create-summary h3 {
+    color: #0b2f6b;
+    margin-bottom: 4px;
+}
+
+.business-create-success {
+    display: block;
+}
+
 .schedule-modal {
     position: fixed;
     inset: 0;

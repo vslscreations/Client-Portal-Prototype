@@ -37,6 +37,7 @@
             <a href="#" onclick="goTo('pickup.html'); toggleMenu(); return false;">Request Pickup</a>
             <a href="#" onclick="goTo('quote.html'); toggleMenu(); return false;">Request Quote</a>
             <a href="#" onclick="goTo('contact.html'); toggleMenu(); return false;">Contact Customer Service</a>
+            <a href="#" onclick="handleOwnerSignOut(); toggleMenu(); return false;">Sign Out</a>
         </div>
     </div>
 </div>
@@ -70,6 +71,16 @@
 </section>
 
 <main class="dashboard-container">
+    <div class="dashboard-card">
+        <div class="business-owner-header-row">
+            <h2>👥 Clients</h2>
+            <button id="openCreateBusinessClientModal" class="request-toggle business-create-button" type="button">+ Add Client</button>
+        </div>
+        <div class="business-owner-summary">
+            <p>Manage the customers who have access to your DasherLab portal.</p>
+        </div>
+    </div>
+
     <div class="dashboard-card">
         <h2>📅 Today's Operations</h2>
         <div class="overview-grid">
@@ -204,6 +215,113 @@
     </div>
 </div>
 
+<div id="businessCreateModal" class="business-create-modal hidden" aria-hidden="true">
+    <div class="business-create-backdrop" data-close-business-create-modal="true"></div>
+    <div class="business-create-dialog" role="dialog" aria-modal="true" aria-labelledby="businessCreateTitle">
+        <div class="business-create-header">
+            <div>
+                <p class="business-create-kicker">Add New Business</p>
+                <h3 id="businessCreateTitle">Create New Business</h3>
+            </div>
+            <button type="button" class="business-create-close" data-close-business-create-modal="true" aria-label="Close business creation form">✕</button>
+        </div>
+
+        <div id="businessCreateFormSection">
+            <form id="createBusinessOwnerForm" class="business-create-form">
+                <div class="business-create-field">
+                    <label for="businessCreateName">Business Name</label>
+                    <input id="businessCreateName" name="businessName" type="text" placeholder="DasherLab Example" required />
+                </div>
+
+                <div class="business-create-field">
+                    <label for="businessOwnerName">Owner Name</label>
+                    <input id="businessOwnerName" name="ownerName" type="text" placeholder="John Smith" required />
+                </div>
+
+                <div class="business-create-field">
+                    <label for="businessOwnerEmail">Owner Email</label>
+                    <input id="businessOwnerEmail" name="ownerEmail" type="email" placeholder="owner@example.com" required />
+                </div>
+
+                <p id="createBusinessOwnerFeedback" class="business-create-feedback" aria-live="polite"></p>
+
+                <div class="business-create-actions">
+                    <button type="button" class="secondary-button" data-close-business-create-modal="true">Cancel</button>
+                    <button type="submit" class="request-toggle">Create Business</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="businessCreateSuccessState" class="business-create-success hidden">
+            <div id="businessCreationSuccessSummary" class="business-create-summary"></div>
+            <div class="business-create-actions success-actions">
+                <button id="businessCreateDoneButton" type="button" class="request-toggle">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="businessClientModal" class="business-create-modal hidden" aria-hidden="true">
+    <div class="business-create-backdrop" data-close-business-client-modal="true"></div>
+    <div class="business-create-dialog" role="dialog" aria-modal="true" aria-labelledby="businessClientTitle">
+        <div class="business-create-header">
+            <div>
+                <p class="business-create-kicker">Add Client</p>
+                <h3 id="businessClientTitle">Create New Client</h3>
+            </div>
+            <button type="button" class="business-create-close" data-close-business-client-modal="true" aria-label="Close client creation form">✕</button>
+        </div>
+
+        <div id="businessClientFormSection">
+            <form id="createBusinessClientForm" class="business-create-form">
+                <div class="business-create-field">
+                    <label for="businessClientFirstName">First Name</label>
+                    <input id="businessClientFirstName" name="clientFirstName" type="text" placeholder="Jane" required />
+                </div>
+
+                <div class="business-create-field">
+                    <label for="businessClientLastName">Last Name</label>
+                    <input id="businessClientLastName" name="clientLastName" type="text" placeholder="Doe" />
+                </div>
+
+                <div class="business-create-field">
+                    <label for="businessClientEmail">Email</label>
+                    <input id="businessClientEmail" name="clientEmail" type="email" placeholder="client@example.com" required />
+                </div>
+
+                <div class="business-create-field">
+                    <label for="businessClientPhone">Phone</label>
+                    <input id="businessClientPhone" name="clientPhone" type="tel" placeholder="555-123-4567" />
+                </div>
+
+                <div class="business-create-field">
+                    <label for="businessClientUsername">Username</label>
+                    <input id="businessClientUsername" name="clientUsername" type="text" placeholder="jane.doe" required />
+                </div>
+
+                <div class="business-create-field">
+                    <label for="businessClientTemporaryPassword">Temporary Password</label>
+                    <input id="businessClientTemporaryPassword" name="clientTemporaryPassword" type="text" placeholder="Temporary password" required />
+                </div>
+
+                <p id="createBusinessClientFeedback" class="business-create-feedback" aria-live="polite"></p>
+
+                <div class="business-create-actions">
+                    <button type="button" class="secondary-button" data-close-business-client-modal="true">Cancel</button>
+                    <button type="submit" class="request-toggle">Create Client</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="businessClientSuccessState" class="business-create-success hidden">
+            <div id="businessClientSuccessSummary" class="business-create-summary"></div>
+            <div class="business-create-actions success-actions">
+                <button id="businessClientDoneButton" type="button" class="request-toggle">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="Avery/dashboardAnalytics.js"></script>
 <script src="Avery/Responses.js"></script>
 <script src="Avery/scheduleInsights.js"></script>
@@ -213,20 +331,38 @@
 <script src="js/supabase-config.js"></script>
 <script src="Avery/supabase.js"></script>
 <script src="js/client-auth.js"></script>
+<script src="js/business-owner-creation.js"></script>
 <script src="js/script.js?v=20260811"></script>
 
 <script>
+async function handleOwnerSignOut() {
+    try {
+        if (window.supabaseClient && window.supabaseClient.auth) {
+            await window.supabaseClient.auth.signOut();
+        }
+    } catch (error) {
+        console.warn("Owner sign-out failed:", error);
+    } finally {
+        window.location.replace("login.html");
+    }
+}
+
 (async function gateOwnerDashboard() {
-    if (!window.DasherLabClientAuth) {
-        window.location.replace("client-login.html");
+    if (!window.supabaseClient || !window.supabaseClient.auth || typeof window.supabaseClient.auth.getSession !== "function") {
+        window.location.replace("login.html");
         return;
     }
 
-    if (typeof window.DasherLabClientAuth.guardProtectedClientRoute === "function") {
-        const routeAllowed = await window.DasherLabClientAuth.guardProtectedClientRoute();
-        if (!routeAllowed) {
+    try {
+        const sessionResult = await window.supabaseClient.auth.getSession();
+        const session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
+        if (!session || !session.user || !session.user.id) {
+            window.location.replace("login.html");
             return;
         }
+    } catch (error) {
+        window.location.replace("login.html");
+        return;
     }
 
     loadDashboard();

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Setup | DasherLab</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #0b2e59;
+        }
+
+        .setup-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .setup-card {
+            width: 100%;
+            max-width: 440px;
+            background: #fff;
+            border-radius: 20px;
+            padding: 32px 28px;
+            box-shadow: 0 12px 30px rgba(11, 46, 89, 0.12);
+        }
+
+        .logo {
+            display: block;
+            max-width: 220px;
+            margin: 0 auto 24px;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            text-align: center;
+            font-size: 2rem;
+        }
+
+        p {
+            margin: 0 0 24px;
+            text-align: center;
+            color: #46536a;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            border: 2px solid #d7deec;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #123d7a 0%, #0b2e59 100%);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .submit-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .message {
+            min-height: 24px;
+            margin-top: 16px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .message.error {
+            color: #b42318;
+        }
+
+        .message.success {
+            color: #146c43;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-card">
+            <img src="assets/images/logo.PNG" class="logo" alt="DasherLab Logo">
+            <h1>Set Up Your Account</h1>
+            <p>Create the password for your DasherLab client portal.</p>
+
+            <form id="clientSetupForm">
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input id="newPassword" name="newPassword" type="password" minlength="8" maxlength="72" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="72" required>
+                </div>
+
+                <button id="setupPasswordButton" type="submit" class="submit-button">Create Password</button>
+            </form>
+
+            <div id="clientSetupMessage" class="message" aria-live="polite"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="Avery/supabase.js"></script>
+    <script src="js/client-auth.js"></script>
+    <script>
+      function setMessage(text, type) {
+        var message = document.getElementById('clientSetupMessage');
+        if (!message) return;
+        message.textContent = text || '';
+        message.className = 'message' + (type ? ' ' + type : '');
+      }
+
+      async function ensureFirstLoginRequirement() {
+        if (!window.supabaseClient || !window.supabaseClient.auth || typeof window.supabaseClient.auth.getUser !== 'function') {
+          setMessage('Please sign in to continue.', 'error');
+          return false;
+        }
+
+        var userResult = await window.supabaseClient.auth.getUser();
+        var user = userResult && userResult.data ? userResult.data.user : null;
+        if (!user) {
+          setMessage('Please sign in to continue.', 'info');
+          return false;
+        }
+
+        var requiresPasswordChange = !!(
+          (user.app_metadata && (user.app_metadata.requires_password_change || user.app_metadata.needs_password_change)) ||
+          (user.user_metadata && (user.user_metadata.requires_password_change || user.user_metadata.needs_password_change))
+        );
+
+        if (!requiresPasswordChange) {
+          window.location.replace('index.html');
+          return false;
+        }
+
+        return true;
+      }
+
+      async function handleSetup(event) {
+        event.preventDefault();
+        var password = document.getElementById('newPassword').value;
+        var confirmPassword = document.getElementById('confirmPassword').value;
+        var button = document.getElementById('setupPasswordButton');
+
+        setMessage('', '');
+
+        if (!password || !confirmPassword) {
+          setMessage('Please enter and confirm your password.', 'error');
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          setMessage('Passwords do not match.', 'error');
+          return;
+        }
+
+        if (!window.supabaseClient || !window.supabaseClient.auth || typeof window.supabaseClient.auth.updateUser !== 'function') {
+          setMessage('Account setup is unavailable right now.', 'error');
+          return;
+        }
+
+        var sessionCheck = await window.supabaseClient.auth.getUser();
+        if (!sessionCheck || !sessionCheck.data || !sessionCheck.data.user) {
+          setMessage('Please sign in to continue.', 'error');
+          return;
+        }
+
+        button.disabled = true;
+        button.textContent = 'Creating Password...';
+
+        try {
+          var result = await window.supabaseClient.auth.updateUser({
+            password: password,
+            data: {
+              requires_password_change: false,
+              needs_password_change: false
+            }
+          });
+
+          try {
+            await window.supabaseClient.auth.getUser();
+          } catch (ignored) {
+            // Ignore refresh issues and continue redirecting; the update above is the primary requirement.
+          }
+          if (result.error) {
+            setMessage(result.error.message || 'Unable to set your password.', 'error');
+            return;
+          }
+
+          setMessage('Your password has been updated. Redirecting to the client dashboard...', 'success');
+          setTimeout(function () {
+            window.location.replace('index.html');
+          }, 1500);
+        } catch (error) {
+          setMessage(error && error.message ? error.message : 'Unable to set your password.', 'error');
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Create Password';
+        }
+      }
+
+      document.getElementById('clientSetupForm').addEventListener('submit', handleSetup);
+      window.addEventListener('DOMContentLoaded', async function () {
+        var isAllowed = await ensureFirstLoginRequirement();
+        if (!isAllowed) {
+          return;
+        }
+      });
+    </script>
+</body>
+</html>

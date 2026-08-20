@@ -2,7 +2,18 @@
 window.DASHERLAB_SUPABASE_CONFIG = window.DASHERLAB_SUPABASE_CONFIG || {
   url: "https://oezpjyuxlxluplfnylhj.supabase.co",
   anonKey: "sb_publishable_QSl106qGZkyP33SCmFVmcA_OAp89elR",
-  ownerNotificationEmail: "admin@dasherlab.org"
+  ownerNotificationEmail: "admin@dasherlab.org",
+  appUrl: (function getAppUrl() {
+    if (typeof window === "undefined") {
+      return "https://dasherlab.org";
+    }
+
+    if (window.location && window.location.origin) {
+      return window.location.origin;
+    }
+
+    return "https://dasherlab.org";
+  })()
 };
 
 window.DasherLabEmailNotifications = window.DasherLabEmailNotifications || {

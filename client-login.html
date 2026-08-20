@@ -135,6 +135,15 @@
             padding: 0;
         }
 
+        .owner-login-link {
+            display: inline-block;
+            margin-top: 12px;
+            color: #0b2e59;
+            font-size: 0.92rem;
+            font-weight: 700;
+            text-decoration: underline;
+        }
+
         @media (max-width: 900px) {
             .client-login-card {
                 padding: 34px;
@@ -158,12 +167,12 @@
 
             <form id="clientLoginForm" onsubmit="handleClientLogin(event)">
                 <div class="form-group">
-                    <label for="clientEmail">Email</label>
+                    <label for="clientUsername">Username</label>
                     <input
-                        type="email"
-                        id="clientEmail"
-                        name="email"
-                        placeholder="Enter your email"
+                        type="text"
+                        id="clientUsername"
+                        name="username"
+                        placeholder="Enter your username"
                         required
                     >
                 </div>
@@ -183,6 +192,8 @@
             </form>
 
             <button class="forgot-password-link" type="button" onclick="handleClientPasswordReset()">Forgot password?</button>
+            <br>
+            <a class="owner-login-link" href="login.html">Owner Portal Login</a>
             <p id="clientAuthError" class="client-auth-error" role="alert" aria-live="polite"></p>
             <p id="clientAuthInfo" class="client-auth-info" aria-live="polite"></p>
         </div>
@@ -222,7 +233,7 @@
         setClientAuthError("");
         setClientAuthInfo("");
 
-        var email = document.getElementById("clientEmail").value.trim();
+        var username = document.getElementById("clientUsername").value.trim();
         var password = document.getElementById("clientPassword").value;
 
         if (!window.DasherLabClientAuth) {
@@ -233,9 +244,14 @@
         setLoadingState(true);
 
         try {
-            var result = await window.DasherLabClientAuth.signInClient(email, password);
+            var result = await window.DasherLabClientAuth.signInClientUsername(username, password);
             if (!result || !result.ok) {
                 setClientAuthError(result && result.message ? result.message : "Unable to sign in right now.");
+                return;
+            }
+
+            if (result.redirectToSetup) {
+                window.location.replace("client-setup.html");
                 return;
             }
 
@@ -251,7 +267,7 @@
         setClientAuthError("");
         setClientAuthInfo("");
 
-        var email = document.getElementById("clientEmail").value.trim();
+        var email = document.getElementById("clientUsername").value.trim();
         if (!window.DasherLabClientAuth) {
             setClientAuthError("Password reset is unavailable right now.");
             return;
@@ -272,9 +288,24 @@
         }
 
         var activeSession = await window.DasherLabClientAuth.requireClientSession({ redirect: false });
-        if (activeSession) {
-            window.location.replace("index.html");
+        if (!activeSession) {
+            var sessionCheck = window.supabaseClient && window.supabaseClient.auth ? await window.supabaseClient.auth.getSession() : null;
+            var user = sessionCheck && sessionCheck.data && sessionCheck.data.session ? sessionCheck.data.session.user : null;
+            if (user && window.location && window.location.replace) {
+                var profileLookup = await window.DasherLabClientAuth.getClientAssociationByUserId(user.id);
+                if (!profileLookup || !profileLookup.ok || !profileLookup.context || String(profileLookup.context.role || "").toLowerCase() !== "client") {
+                    window.location.replace("dashboard.html");
+                }
+            }
+            return;
         }
+
+        if (activeSession.requiresPasswordChange) {
+            window.location.replace("client-setup.html");
+            return;
+        }
+
+        window.location.replace("index.html");
     })();
 </script>
 
