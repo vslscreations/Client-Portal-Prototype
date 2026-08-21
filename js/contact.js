@@ -125,6 +125,7 @@ async function submitContact(){
         const payload = {
             business_id: association.context.businessId,
             created_by_user_id: session.user.id,
+            client_user_id: session.user.id,
             name: name,
             phone: phone || null,
             email: email,

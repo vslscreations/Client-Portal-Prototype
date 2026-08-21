@@ -141,10 +141,11 @@ function setPickupSubmitState(isBusy){
     }
 }
 
-function buildPickupSupabasePayload(formValues, businessId, trackingId, createdByUserId){
+function buildPickupSupabasePayload(formValues, businessId, trackingId, createdByUserId, clientUserId){
     return {
         business_id: businessId,
         created_by_user_id: createdByUserId || null,
+        client_user_id: clientUserId || null,
         customer_name: formValues.fullName || null,
         business_name: formValues.businessName || null,
         email: formValues.email || null,
@@ -296,6 +297,7 @@ async function submitRequest(){
         formValues,
         association.context.businessId,
         request.trackingId,
+        session.user.id,
         session.user.id
     );
     const createResult = await createPickupRequestInSupabase(supabasePayload);

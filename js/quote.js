@@ -235,10 +235,11 @@ function buildQuoteReference(){
     return "Q-" + y + m + d + "-" + t;
 }
 
-function buildQuoteSupabasePayload(formValues, businessId, estimate, quoteReference, createdByUserId){
+function buildQuoteSupabasePayload(formValues, businessId, estimate, quoteReference, createdByUserId, clientUserId){
     return {
         business_id: businessId,
         created_by_user_id: createdByUserId || null,
+        client_user_id: clientUserId || null,
         pickup_address: formValues.pickupAddress,
         delivery_address: formValues.deliveryAddress,
         service_type: formValues.serviceType,
@@ -353,6 +354,7 @@ async function submitQuote(){
         association.context.businessId,
         estimate,
         quoteReference,
+        session.user.id,
         session.user.id
     );
     const quoteInsert = await createQuoteInSupabase(supabasePayload);

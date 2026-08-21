@@ -240,6 +240,8 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    const name = `${firstName}${lastName ? ` ${lastName}` : ''}`.trim();
+
     stage = 'duplicate-check';
     const duplicateEmail = await ensureUniqueEmail(serviceRoleClient, email);
     if (duplicateEmail) {
@@ -256,8 +258,6 @@ Deno.serve(async (req: Request) => {
         message: 'That username is already in use. Please choose another.'
       });
     }
-
-    const name = `${firstName}${lastName ? ` ${lastName}` : ''}`.trim();
 
     stage = 'create-auth-user';
     console.warn('[create-business-client] creating auth user', {

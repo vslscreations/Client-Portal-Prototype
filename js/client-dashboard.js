@@ -96,11 +96,17 @@
     return typeof result.count === "number" ? result.count : 0;
   }
 
-  async function fetchCount(tableName, businessId) {
-    var result = await global.supabaseClient
+  async function fetchCount(tableName, businessId, clientUserId) {
+    var query = global.supabaseClient
       .from(tableName)
       .select("id", { count: "exact", head: true })
       .eq("business_id", businessId);
+
+    if (clientUserId) {
+      query = query.eq("client_user_id", clientUserId);
+    }
+
+    var result = await query;
 
     return {
       data: toCount(result),
@@ -135,13 +141,17 @@
     };
   }
 
-  async function fetchRecentPickups(businessId) {
-    var result = await global.supabaseClient
+  async function fetchRecentPickups(businessId, clientUserId) {
+    var query = global.supabaseClient
       .from("pickup_requests")
       .select("id, pickup_address, delivery_address, pickup_date, pickup_time, service_type, priority, package_type, notes, status, tracking_number, created_at")
-      .eq("business_id", businessId)
-      .order("created_at", { ascending: false })
-      .limit(5);
+      .eq("business_id", businessId);
+
+    if (clientUserId) {
+      query = query.eq("client_user_id", clientUserId);
+    }
+
+    var result = await query.order("created_at", { ascending: false }).limit(5);
 
     return {
       data: Array.isArray(result.data) ? result.data : [],
@@ -149,13 +159,17 @@
     };
   }
 
-  async function fetchRecentQuotes(businessId) {
-    var result = await global.supabaseClient
+  async function fetchRecentQuotes(businessId, clientUserId) {
+    var query = global.supabaseClient
       .from("quotes")
       .select("id, pickup_address, delivery_address, service_type, mileage, priority, estimated_total, requested_date, notes, status, created_at")
-      .eq("business_id", businessId)
-      .order("created_at", { ascending: false })
-      .limit(5);
+      .eq("business_id", businessId);
+
+    if (clientUserId) {
+      query = query.eq("client_user_id", clientUserId);
+    }
+
+    var result = await query.order("created_at", { ascending: false }).limit(5);
 
     return {
       data: Array.isArray(result.data) ? result.data : [],
@@ -218,14 +232,15 @@
   }
 
   function updateSnapshot(counts) {
-    setText("clientCustomersCount", String(counts.customers));
-    setText("clientPickupCount", String(counts.pickups));
-    setText("clientQuoteCount", String(counts.quotes));
-    setText("clientOpenItemsCount", String(counts.openItems));
+    var hasAnyActivity = !!(counts && (counts.customers || counts.pickups || counts.quotes || counts.openItems));
+    setText("clientCustomersCount", hasAnyActivity ? String(counts.customers) : "");
+    setText("clientPickupCount", hasAnyActivity ? String(counts.pickups) : "");
+    setText("clientQuoteCount", hasAnyActivity ? String(counts.quotes) : "");
+    setText("clientOpenItemsCount", hasAnyActivity ? String(counts.openItems) : "");
   }
 
   function setDashboardStatus(message) {
-    setText("clientDashboardStatus", message);
+    setText("clientDashboardStatus", message || "No activity yet");
   }
 
   async function loadClientDashboard() {
@@ -240,14 +255,15 @@
     }
 
     var businessId = sessionData.businessId;
+    var currentUserId = sessionData.user && sessionData.user.id ? sessionData.user.id : null;
     var results = await Promise.all([
       fetchBusiness(businessId),
       fetchCount("customers", businessId),
-      fetchCount("pickup_requests", businessId),
-      fetchCount("quotes", businessId),
+      fetchCount("pickup_requests", businessId, currentUserId),
+      fetchCount("quotes", businessId, currentUserId),
       fetchRecentCustomers(businessId),
-      fetchRecentPickups(businessId),
-      fetchRecentQuotes(businessId)
+      fetchRecentPickups(businessId, currentUserId),
+      fetchRecentQuotes(businessId, currentUserId)
     ]);
 
     var businessResult = results[0];
@@ -280,24 +296,32 @@
     if (hadErrors) {
       setDashboardStatus("Some authenticated dashboard data is unavailable right now. Your session is still active.");
     } else if (counts.customers === 0 && counts.pickups === 0 && counts.quotes === 0) {
-      setDashboardStatus("Your authenticated business is connected. Activity will appear here as customers, pickups, and quotes are created.");
+      setDashboardStatus("No activity yet");
     } else {
       setDashboardStatus("Showing live data for your authenticated business profile.");
     }
 
-    renderActivityList(
-      "clientActivityList",
-      buildActivityItems(pickupsResult.data, quotesResult.data),
-      "No activity yet",
-      "Pickup requests and quote activity will appear here once your authenticated business starts using the portal."
-    );
+    var activityItems = buildActivityItems(pickupsResult.data, quotesResult.data);
+    var customerItems = buildCustomerItems(customersResult.data);
 
-    renderActivityList(
-      "clientCustomerList",
-      buildCustomerItems(customersResult.data),
-      "No customer contacts yet",
-      "Customer records for your authenticated business will appear here once they are added."
-    );
+    if (counts.customers === 0 && counts.pickups === 0 && counts.quotes === 0) {
+      renderEmptyState("clientActivityList", "No activity yet", "Activity will appear here after this account has any pickup or quote activity.");
+      renderEmptyState("clientCustomerList", "No customer contacts yet", "Customer records will appear here once activity is created.");
+    } else {
+      renderActivityList(
+        "clientActivityList",
+        activityItems,
+        "No activity yet",
+        "Pickup requests and quote activity will appear here once your authenticated business starts using the portal."
+      );
+
+      renderActivityList(
+        "clientCustomerList",
+        customerItems,
+        "No customer contacts yet",
+        "Customer records for your authenticated business will appear here once they are added."
+      );
+    }
   }
 
   global.DasherLabClientDashboard = {

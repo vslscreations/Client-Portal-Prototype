@@ -220,6 +220,41 @@
 <script src="Avery/supabase.js"></script>
 <script src="js/client-auth.js"></script>
 <script>
+(function showClientAccessMessageOnHomePage() {
+    const message = window.sessionStorage ? window.sessionStorage.getItem("clientAccessNotice") : null;
+    if (!message) {
+        return;
+    }
+
+    const notice = document.createElement("div");
+    notice.style.position = "fixed";
+    notice.style.top = "20px";
+    notice.style.right = "20px";
+    notice.style.maxWidth = "360px";
+    notice.style.padding = "16px 18px";
+    notice.style.background = "#0b2e59";
+    notice.style.color = "#ffffff";
+    notice.style.borderRadius = "12px";
+    notice.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
+    notice.style.zIndex = "99999";
+    notice.style.fontSize = "14px";
+    notice.style.lineHeight = "1.5";
+    notice.style.fontWeight = "600";
+    notice.innerHTML = "<div>" + message + "</div>";
+    document.body.appendChild(notice);
+
+    setTimeout(function () {
+        notice.style.opacity = "0";
+        notice.style.transition = "opacity 0.4s ease";
+        setTimeout(function () {
+            notice.remove();
+            if (window.sessionStorage) {
+                window.sessionStorage.removeItem("clientAccessNotice");
+            }
+        }, 450);
+    }, 2200);
+}
+
 (async function gateClientPortal() {
     if (!window.DasherLabClientAuth) {
         window.location.replace("client-login.html");
@@ -232,6 +267,8 @@
             return;
         }
     }
+
+    showClientAccessMessageOnHomePage();
 })();
 </script>
 <script src="js/script.js"></script>

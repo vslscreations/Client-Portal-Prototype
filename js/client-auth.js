@@ -332,12 +332,18 @@
       return null;
     }
 
-    if (association.context && association.context.role && String(association.context.role).toLowerCase() !== "client") {
-      clearClientContext();
-      if (shouldRedirect && global.location) {
-        global.location.replace("dashboard.html");
+    if (association.context && association.context.role) {
+      var role = String(association.context.role).toLowerCase();
+      var currentPath = global.location && global.location.pathname ? global.location.pathname.toLowerCase() : "";
+      var isClientHomeRoute = currentPath === "/index.html" || currentPath === "/" || currentPath.endsWith("/index.html");
+
+      if (role !== "client" && !isClientHomeRoute) {
+        clearClientContext();
+        if (shouldRedirect && global.location) {
+          global.location.replace("dashboard.html");
+        }
+        return null;
       }
-      return null;
     }
 
     var requiresPasswordChange = hasPasswordChangeRequired(session.user);
