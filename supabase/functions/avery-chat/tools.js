@@ -501,7 +501,7 @@ export function validateToolRequest(toolName, rawArgs = {}) {
     if (!trackingNumber) {
       throw new Error('Tool "lookup_pickup" requires tracking_number.');
     }
-    filters.tracking_number = trackingNumber;
+    filters.tracking_number = trackingNumber.toUpperCase();
   }
 
   if (definition.name === "lookup_quote") {

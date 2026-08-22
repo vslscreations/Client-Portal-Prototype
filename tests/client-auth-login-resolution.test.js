@@ -1,8 +1,14 @@
 const assert = require('assert');
 const fs = require('fs');
 const vm = require('vm');
+const path = require('path');
 
-const code = fs.readFileSync(require('path').join(__dirname, '..', 'js', 'client-auth.js'), 'utf8');
+const code = fs.readFileSync(path.join(__dirname, '..', 'js', 'client-auth.js'), 'utf8');
+const loginHtml = fs.readFileSync(path.join(__dirname, '..', 'login.html'), 'utf8');
+
+assert(/role\s*!==\s*['"]owner['"]|String\(userResult\.data\.role\s*\|\|\s*''\)\.toLowerCase\(\)\s*!==\s*['"]owner['"]/.test(loginHtml), 'Owner login must validate the signed-in user is an owner before redirecting to the dashboard');
+assert(/window\.location\.replace\(['"]dashboard\.html['"]\)/.test(loginHtml), 'Owner login should still redirect authorized owners to the dashboard');
+assert(!/getOwnerSessionProfile\(.*\)\s*;\s*\n\s*window\.location\.replace\(['"]dashboard\.html['"]\)/s.test(loginHtml), 'Owner login should not auto-redirect all users without checking owner authorization');
 
 function createAuthHarness(options = {}) {
   const sessionStorage = {};

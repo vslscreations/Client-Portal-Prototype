@@ -861,6 +861,56 @@ function getRequestStatusClass(status){
     return status === "Completed" ? "completed" : status === "Active" ? "active" : "";
 }
 
+function isRequestDismissed(request){
+    if(!request){
+        return false;
+    }
+    return request.dismissed === true || String(request.status || "").trim().toLowerCase() === "dismissed";
+}
+
+function isArchiveFolderOpen(){
+    return !!window.requestArchiveOpen;
+}
+
+function setArchiveFolderOpen(isOpen){
+    window.requestArchiveOpen = !!isOpen;
+    const archiveButton = document.getElementById("requestArchiveToggle");
+    if(archiveButton){
+        archiveButton.classList.toggle("active", !!isOpen);
+        archiveButton.setAttribute("aria-pressed", isOpen ? "true" : "false");
+        archiveButton.textContent = isOpen ? "Back to Requests" : "Dismissed Archive";
+    }
+}
+
+async function dismissRequest(index){
+    const requests = Array.isArray(window.dashboardRequestsCache)
+        ? window.dashboardRequestsCache
+        : JSON.parse(localStorage.getItem("requests") || "[]");
+    const targetRequest = requests[index];
+
+    if(!targetRequest || targetRequest.sourceType === "pickup"){
+        return;
+    }
+
+    targetRequest.dismissed = true;
+    targetRequest.status = "Dismissed";
+
+    if(window.supabaseClient && targetRequest.sourceTable && targetRequest.sourceId){
+        const updateResult = await window.supabaseClient
+            .from(targetRequest.sourceTable)
+            .update({ status: "Dismissed" })
+            .eq("id", targetRequest.sourceId);
+
+        if(updateResult.error){
+            return;
+        }
+    }
+
+    window.dashboardRequestsCache = requests;
+    localStorage.setItem("requests", JSON.stringify(requests));
+    renderDashboardRequests(requests);
+}
+
 async function updateRequestStatus(index, status){
     const cachedRequests = Array.isArray(window.dashboardRequestsCache) ? window.dashboardRequestsCache : null;
     const requests = cachedRequests || JSON.parse(localStorage.getItem("requests") || "[]");
@@ -1085,7 +1135,8 @@ async function savePickupSchedule(event){
             .update({
                 scheduled_pickup_date: nextDate,
                 scheduled_pickup_time: nextTime,
-                assigned_driver: nextDriver
+                assigned_driver: nextDriver,
+                status: "Active"
             })
             .eq("id", targetRequest.sourceId);
 
@@ -1097,6 +1148,7 @@ async function savePickupSchedule(event){
     targetRequest.scheduled_pickup_date = nextDate;
     targetRequest.scheduled_pickup_time = nextTime;
     targetRequest.assigned_driver = nextDriver;
+    targetRequest.status = "Active";
 
     window.dashboardRequestsCache = requests;
     localStorage.setItem("requests", JSON.stringify(requests));
@@ -1122,7 +1174,8 @@ async function clearPickupSchedule(){
             .update({
                 scheduled_pickup_date: null,
                 scheduled_pickup_time: null,
-                assigned_driver: null
+                assigned_driver: null,
+                status: "Awaiting Dispatch"
             })
             .eq("id", targetRequest.sourceId);
 
@@ -1134,6 +1187,7 @@ async function clearPickupSchedule(){
     targetRequest.scheduled_pickup_date = null;
     targetRequest.scheduled_pickup_time = null;
     targetRequest.assigned_driver = null;
+    targetRequest.status = "Awaiting Dispatch";
 
     window.dashboardRequestsCache = requests;
     localStorage.setItem("requests", JSON.stringify(requests));
@@ -1354,7 +1408,6 @@ function getRequestDetailHtml(request){
                     <h4>Request Details</h4>
                     <p><strong>Type:</strong> ${escapeHtml(getRequestService(request))}</p>
                     <p><strong>Priority:</strong> ${escapeHtml(getRequestPriority(request))}</p>
-                    <p><strong>Status:</strong> ${escapeHtml(getRequestStatus(request))}</p>
                 </div>
                 <div>
                     <h4>Message</h4>
@@ -1379,7 +1432,6 @@ function getRequestDetailHtml(request){
                     <p><strong>Service type:</strong> ${escapeHtml(serviceLevel)}</p>
                     <p><strong>Priority:</strong> ${escapeHtml(quotePriority)}</p>
                     <p><strong>Estimated total:</strong> ${request && request.quote && request.quote.estimatedTotal ? "$" + Number(request.quote.estimatedTotal).toLocaleString() : "Pending review"}</p>
-                    <p><strong>Status:</strong> ${escapeHtml(getRequestStatus(request))}</p>
                 </div>
                 <div>
                     <h4>Scheduling</h4>
@@ -1448,7 +1500,27 @@ function getActiveRequestTypeFilter(){
 
 function getDashboardRequestFilter(){
     const activeTab = document.querySelector('.request-status-tab.active');
-    return activeTab && activeTab.getAttribute('data-filter') === 'completed' ? 'completed' : 'active';
+    const filter = activeTab ? activeTab.getAttribute('data-filter') : 'awaiting-dispatch';
+    return filter === 'completed' || filter === 'active' || filter === 'awaiting-dispatch' ? filter : 'awaiting-dispatch';
+}
+
+function syncRequestStatusTabsForRequestType(){
+    const requestType = getActiveRequestTypeFilter();
+    const statusTabs = document.querySelectorAll('.request-status-tab');
+    const statusTabsContainer = document.querySelector('.request-status-tabs');
+
+    if(statusTabsContainer){
+        statusTabsContainer.style.display = requestType === 'pickup' ? '' : 'none';
+    }
+
+    if(requestType !== 'pickup'){
+        statusTabs.forEach(function(tab){
+            tab.classList.remove('active');
+            if(tab.getAttribute('data-filter') === 'awaiting-dispatch'){
+                tab.classList.add('active');
+            }
+        });
+    }
 }
 
 function getRequestTypeKey(request){
@@ -1516,6 +1588,26 @@ function timeToMinutes(value){
     return 86400;
 }
 
+function sortRequestsNewestFirst(left, right){
+    const leftTimestamp = new Date(left && left.createdAt ? left.createdAt : 0).getTime();
+    const rightTimestamp = new Date(right && right.createdAt ? right.createdAt : 0).getTime();
+
+    if (leftTimestamp !== rightTimestamp) {
+        return rightTimestamp - leftTimestamp;
+    }
+
+    const leftDate = getRequestDateForGrouping(left);
+    const rightDate = getRequestDateForGrouping(right);
+    const leftSortDate = leftDate ? new Date(leftDate.includes('T') ? leftDate : leftDate + 'T00:00:00').getTime() : 0;
+    const rightSortDate = rightDate ? new Date(rightDate.includes('T') ? rightDate : rightDate + 'T00:00:00').getTime() : 0;
+
+    if (leftSortDate !== rightSortDate) {
+        return rightSortDate - leftSortDate;
+    }
+
+    return timeToMinutes(getRequestTimeForGrouping(right)) - timeToMinutes(getRequestTimeForGrouping(left));
+}
+
 function buildRequestGroups(requests){
     const monthMap = new Map();
     const noDate = [];
@@ -1549,22 +1641,20 @@ function buildRequestGroups(requests){
     });
 
     const monthEntries = Array.from(monthMap.values()).sort(function(left, right){
-        return left.sort - right.sort;
+        return right.sort - left.sort;
     }).map(function(monthEntry){
         const days = Array.from(monthEntry.days.values()).sort(function(left, right){
-            return left.sort - right.sort;
+            return right.sort - left.sort;
         }).map(function(dayEntry){
             dayEntry.items.sort(function(left, right){
-                const leftTime = timeToMinutes(getRequestTimeForGrouping(left));
-                const rightTime = timeToMinutes(getRequestTimeForGrouping(right));
-                return leftTime - rightTime;
+                return sortRequestsNewestFirst(left, right);
             });
             return dayEntry;
         });
         return { ...monthEntry, days };
     });
 
-    return { monthEntries, noDate };
+    return { monthEntries, noDate: noDate.sort(sortRequestsNewestFirst) };
 }
 
 function renderDashboardRequests(requests){
@@ -1575,20 +1665,52 @@ function renderDashboardRequests(requests){
 
     const filter = getDashboardRequestFilter();
     const requestTypeFilter = getActiveRequestTypeFilter();
-    const visibleRequests = requests.filter(function (request) {
-        const status = getRequestStatus(request);
-        const typeMatch = requestTypeFilter === 'all' || getRequestTypeKey(request) === requestTypeFilter;
-        if (filter === 'completed') {
-            return typeMatch && status === 'Completed';
-        }
-        return typeMatch && status !== 'Completed';
-    });
+    const visibleRequests = requests
+        .filter(function (request) {
+            const status = getRequestStatus(request);
+            const typeMatch = requestTypeFilter === 'all' || getRequestTypeKey(request) === requestTypeFilter;
+
+            if (!typeMatch) {
+                return false;
+            }
+
+            if (requestTypeFilter === 'pickup') {
+                if (filter === 'completed') {
+                    return status === 'Completed';
+                }
+                if (filter === 'awaiting-dispatch') {
+                    return status === 'Awaiting Dispatch';
+                }
+                if (filter === 'active') {
+                    return status === 'Active';
+                }
+                return status !== 'Completed';
+            }
+
+            const isDismissed = isRequestDismissed(request);
+            if (isArchiveFolderOpen()) {
+                return isDismissed;
+            }
+            return !isDismissed;
+        })
+        .sort(sortRequestsNewestFirst);
 
     if(visibleRequests.length === 0){
+        const emptyLabel = requestTypeFilter === 'pickup' ? 'pickup' : requestTypeFilter === 'quote' ? 'quote' : 'contact';
+        const emptyDescription = requestTypeFilter === 'pickup'
+            ? (filter === 'completed'
+                ? 'Completed requests will appear here once they are marked complete.'
+                : filter === 'active'
+                    ? 'Active pickup requests will appear here as they are assigned and moved into dispatch.'
+                    : 'Awaiting dispatch pickups will appear here as new requests come in.')
+            : (isArchiveFolderOpen()
+                ? 'No dismissed quote or contact requests are in the archive yet.'
+                : 'No active quote or contact requests are waiting right now.');
+
         requestList.innerHTML = `
             <div class="empty-state">
-                <h3>No ${requestTypeFilter === 'pickup' ? 'pickup' : requestTypeFilter === 'quote' ? 'quote' : 'contact'} ${filter === 'completed' ? 'completed' : 'active or pending'} requests yet</h3>
-                <p>${filter === 'completed' ? 'Completed requests will appear here once they are marked complete.' : 'Active and pending requests will appear here as they come in.'}</p>
+                <h3>No ${requestTypeFilter === 'pickup' ? (filter === 'completed' ? 'completed' : filter === 'active' ? 'active' : filter === 'awaiting-dispatch' ? 'awaiting dispatch' : 'active or pending') : (isArchiveFolderOpen() ? 'dismissed' : 'active')} ${emptyLabel} requests yet</h3>
+                <p>${emptyDescription}</p>
             </div>
         `;
         return;
@@ -1634,6 +1756,18 @@ function renderDashboardRequests(requests){
                     ? `<div class="quote-summary"><p><strong>Scheduled:</strong> ${escapeHtml(formatScheduleDateValue(getRequestScheduleDate(request)))} ${getRequestScheduleTime(request) ? "at " + escapeHtml(formatScheduleTimeValue(getRequestScheduleTime(request))) : ""}</p><p><strong>Driver:</strong> ${escapeHtml(getRequestAssignedDriver(request) || "Unassigned")}</p></div>`
                     : "";
 
+                const isQuoteOrContact = request && (request.sourceType === 'quote' || request.sourceType === 'contact');
+                const requestStatusMarkup = isQuoteOrContact ? '' : `
+                    <div class="request-status-row">
+                        <label class="request-status-label" for="requestStatus-${originalIndex}">Status</label>
+                        <select class="request-status-select ${statusClass}" id="requestStatus-${originalIndex}" onchange="updateRequestStatusFromSelect(${originalIndex}, this.value)">
+                            <option value="Awaiting Dispatch" ${status === "Awaiting Dispatch" ? "selected" : ""}>Awaiting Dispatch</option>
+                            <option value="Active" ${status === "Active" ? "selected" : ""}>Active</option>
+                            <option value="Completed" ${status === "Completed" ? "selected" : ""}>Completed</option>
+                        </select>
+                    </div>
+                `;
+
                 return `
                     <article class="request-card" data-index="${originalIndex}">
                         <div class="request-card-header">
@@ -1641,17 +1775,10 @@ function renderDashboardRequests(requests){
                                 <h3>${escapeHtml(getRequestTitle(request))}</h3>
                                 <p class="request-subtitle">${escapeHtml(getRequestService(request))}</p>
                             </div>
-                            <span class="status-pill ${statusClass}">${escapeHtml(status)}</span>
+                            ${isQuoteOrContact ? '' : `<span class="status-pill ${statusClass}">${escapeHtml(status)}</span>`}
                         </div>
 
-                        <div class="request-status-row">
-                            <label class="request-status-label" for="requestStatus-${originalIndex}">Status</label>
-                            <select class="request-status-select ${statusClass}" id="requestStatus-${originalIndex}" onchange="updateRequestStatusFromSelect(${originalIndex}, this.value)">
-                                <option value="Awaiting Dispatch" ${status === "Awaiting Dispatch" ? "selected" : ""}>Awaiting Dispatch</option>
-                                <option value="Active" ${status === "Active" ? "selected" : ""}>Active</option>
-                                <option value="Completed" ${status === "Completed" ? "selected" : ""}>Completed</option>
-                            </select>
-                        </div>
+                        ${requestStatusMarkup}
 
                         <div class="request-tracking">Tracking Number<br><strong>${escapeHtml(trackingId)}</strong></div>
 
@@ -1663,6 +1790,7 @@ function renderDashboardRequests(requests){
                         <div class="request-actions">
                             <a class="request-link" href="pages/tracking-status.html">Track Request</a>
                             ${request && request.sourceType === "pickup" ? `<button type="button" class="schedule-pickup-button" onclick="openScheduleModal(${originalIndex})">${getRequestScheduleDate(request) || getRequestScheduleTime(request) ? "Edit Schedule" : "Schedule Pickup"}</button>` : ""}
+                            ${isQuoteOrContact ? `<button type="button" class="dismiss-request-button" onclick="dismissRequest(${originalIndex})">Dismiss</button>` : ""}
                             <button type="button" class="request-toggle" onclick="toggleRequestDetails(${originalIndex})">Show More</button>
                         </div>
 
@@ -1738,6 +1866,18 @@ function renderDashboardRequests(requests){
                         ? `<div class="quote-summary"><p><strong>Scheduled:</strong> ${escapeHtml(formatScheduleDateValue(getRequestScheduleDate(request)))} ${getRequestScheduleTime(request) ? "at " + escapeHtml(formatScheduleTimeValue(getRequestScheduleTime(request))) : ""}</p><p><strong>Driver:</strong> ${escapeHtml(getRequestAssignedDriver(request) || "Unassigned")}</p></div>`
                         : "";
 
+                    const isQuoteOrContact = request && (request.sourceType === 'quote' || request.sourceType === 'contact');
+                    const requestStatusMarkup = isQuoteOrContact ? '' : `
+                        <div class="request-status-row">
+                            <label class="request-status-label" for="requestStatus-${originalIndex}">Status</label>
+                            <select class="request-status-select ${statusClass}" id="requestStatus-${originalIndex}" onchange="updateRequestStatusFromSelect(${originalIndex}, this.value)">
+                                <option value="Awaiting Dispatch" ${status === "Awaiting Dispatch" ? "selected" : ""}>Awaiting Dispatch</option>
+                                <option value="Active" ${status === "Active" ? "selected" : ""}>Active</option>
+                                <option value="Completed" ${status === "Completed" ? "selected" : ""}>Completed</option>
+                            </select>
+                        </div>
+                    `;
+
                     return `
                         <article class="request-card" data-index="${originalIndex}">
                             <div class="request-card-header">
@@ -1745,17 +1885,10 @@ function renderDashboardRequests(requests){
                                     <h3>${escapeHtml(getRequestTitle(request))}</h3>
                                     <p class="request-subtitle">${escapeHtml(getRequestService(request))}</p>
                                 </div>
-                                <span class="status-pill ${statusClass}">${escapeHtml(status)}</span>
+                                ${isQuoteOrContact ? '' : `<span class="status-pill ${statusClass}">${escapeHtml(status)}</span>`}
                             </div>
 
-                            <div class="request-status-row">
-                                <label class="request-status-label" for="requestStatus-${originalIndex}">Status</label>
-                                <select class="request-status-select ${statusClass}" id="requestStatus-${originalIndex}" onchange="updateRequestStatusFromSelect(${originalIndex}, this.value)">
-                                    <option value="Awaiting Dispatch" ${status === "Awaiting Dispatch" ? "selected" : ""}>Awaiting Dispatch</option>
-                                    <option value="Active" ${status === "Active" ? "selected" : ""}>Active</option>
-                                    <option value="Completed" ${status === "Completed" ? "selected" : ""}>Completed</option>
-                                </select>
-                            </div>
+                            ${requestStatusMarkup}
 
                             <div class="request-tracking">Tracking Number<br><strong>${escapeHtml(trackingId)}</strong></div>
 
@@ -1767,6 +1900,7 @@ function renderDashboardRequests(requests){
                             <div class="request-actions">
                                 <a class="request-link" href="pages/tracking-status.html">Track Request</a>
                                 ${request && request.sourceType === "pickup" ? `<button type="button" class="schedule-pickup-button" onclick="openScheduleModal(${originalIndex})">${getRequestScheduleDate(request) || getRequestScheduleTime(request) ? "Edit Schedule" : "Schedule Pickup"}</button>` : ""}
+                                ${isQuoteOrContact ? `<button type="button" class="dismiss-request-button" onclick="dismissRequest(${originalIndex})">Dismiss</button>` : ""}
                                 <button type="button" class="request-toggle" onclick="toggleRequestDetails(${originalIndex})">Show More</button>
                             </div>
 
@@ -1808,6 +1942,17 @@ function attachRequestFilterHandlers(){
         });
     });
 
+    const archiveButton = document.getElementById('requestArchiveToggle');
+    if(archiveButton){
+        archiveButton.addEventListener('click', function () {
+            setArchiveFolderOpen(!isArchiveFolderOpen());
+            const requests = Array.isArray(window.dashboardRequestsCache)
+                ? window.dashboardRequestsCache
+                : JSON.parse(localStorage.getItem("requests") || "[]");
+            renderDashboardRequests(requests);
+        });
+    }
+
     document.querySelectorAll('.request-type-tab').forEach(function (tab) {
         tab.addEventListener('click', function () {
             document.querySelectorAll('.request-type-tab').forEach(function (item) {
@@ -1816,12 +1961,16 @@ function attachRequestFilterHandlers(){
             });
             tab.classList.add('active');
             tab.setAttribute('aria-selected', 'true');
+            syncRequestStatusTabsForRequestType();
             const requests = Array.isArray(window.dashboardRequestsCache)
                 ? window.dashboardRequestsCache
                 : JSON.parse(localStorage.getItem("requests") || "[]");
             renderDashboardRequests(requests);
         });
     });
+
+    syncRequestStatusTabsForRequestType();
+    setArchiveFolderOpen(false);
 }
 
 async function getOwnerDashboardBusinessId(){
@@ -1837,15 +1986,21 @@ async function getOwnerDashboardBusinessId(){
 
     const userResult = await window.supabaseClient
         .from("users")
-        .select("business_id")
+        .select("id, role, business_id")
         .eq("id", session.user.id)
         .maybeSingle();
 
-    if(userResult.error || !userResult.data || !userResult.data.business_id){
+    if(userResult.error || !userResult.data){
         return null;
     }
 
-    return userResult.data.business_id;
+    const businessId = userResult.data.business_id;
+
+    if(String(userResult.data.role || "").toLowerCase() !== "owner" || !businessId){
+        return null;
+    }
+
+    return businessId;
 }
 
 function mapSupabaseQuoteToDashboardRequest(quote){
@@ -1992,6 +2147,343 @@ async function fetchSupabaseDashboardRequests(){
         });
 }
 
+function getOwnerClientDemoDirectory(){
+    const configured = Array.isArray(window.ownerClientDemoDirectory) ? window.ownerClientDemoDirectory : [];
+    if(configured.length){
+        return configured;
+    }
+
+    const raw = typeof localStorage !== "undefined" ? localStorage.getItem("ownerClientDemoDirectory") : null;
+    if(raw){
+        try {
+            const parsed = JSON.parse(raw);
+            if(Array.isArray(parsed) && parsed.length){
+                window.ownerClientDemoDirectory = parsed;
+                return parsed;
+            }
+        } catch (error) {
+            console.warn("Owner client demo data could not be parsed", error);
+        }
+    }
+
+    const demoClients = [
+        {
+            id: "demo-client-1",
+            name: "Ava Thompson",
+            email: "ava.thompson@example.com",
+            username: "ava.t",
+            role: "client",
+            business_id: "demo-business",
+            created_at: "2026-08-01T09:00:00Z",
+            first_name: "Ava",
+            last_name: "Thompson",
+            displayName: "Ava Thompson",
+            counts: { pickup: 4, quote: 3, contact: 2 },
+            totalRequests: 9
+        },
+        {
+            id: "demo-client-2",
+            name: "Marcus Lee",
+            email: "marcus.lee@example.com",
+            username: "marcus.l",
+            role: "client",
+            business_id: "demo-business",
+            created_at: "2026-08-06T11:00:00Z",
+            first_name: "Marcus",
+            last_name: "Lee",
+            displayName: "Marcus Lee",
+            counts: { pickup: 2, quote: 1, contact: 1 },
+            totalRequests: 4
+        },
+        {
+            id: "demo-client-3",
+            name: "Sofia Patel",
+            email: "sofia.patel@example.com",
+            username: "sofia.p",
+            role: "client",
+            business_id: "demo-business",
+            created_at: "2026-08-09T12:30:00Z",
+            first_name: "Sofia",
+            last_name: "Patel",
+            displayName: "Sofia Patel",
+            counts: { pickup: 6, quote: 4, contact: 3 },
+            totalRequests: 13
+        }
+    ];
+
+    window.ownerClientDemoDirectory = demoClients;
+    if(typeof localStorage !== "undefined"){
+        localStorage.setItem("ownerClientDemoDirectory", JSON.stringify(demoClients));
+    }
+
+    return demoClients;
+}
+
+async function fetchOwnerClientDirectory(){
+    if(!window.supabaseClient){
+        return [];
+    }
+
+    const businessId = await getOwnerDashboardBusinessId();
+    if(!businessId){
+        return [];
+    }
+
+    const { data, error } = await window.supabaseClient
+        .from("users")
+        .select("id, name, email, username, role, business_id, created_at, first_name, last_name")
+        .eq("business_id", businessId)
+        .eq("role", "client")
+        .order("created_at", { ascending: false });
+
+    if(error || !Array.isArray(data)){
+        return [];
+    }
+
+    const clients = await Promise.all(data.map(async function(client){
+        const [pickupResult, quoteResult, contactResult] = await Promise.all([
+            window.supabaseClient
+                .from("pickup_requests")
+                .select("id", { count: "exact", head: true })
+                .eq("business_id", businessId)
+                .eq("client_user_id", client.id),
+            window.supabaseClient
+                .from("quotes")
+                .select("id", { count: "exact", head: true })
+                .eq("business_id", businessId)
+                .eq("client_user_id", client.id),
+            window.supabaseClient
+                .from("contact_requests")
+                .select("id", { count: "exact", head: true })
+                .eq("business_id", businessId)
+                .eq("client_user_id", client.id)
+        ]);
+
+        const pickupCount = pickupResult && !pickupResult.error ? Number(pickupResult.count || 0) : 0;
+        const quoteCount = quoteResult && !quoteResult.error ? Number(quoteResult.count || 0) : 0;
+        const contactCount = contactResult && !contactResult.error ? Number(contactResult.count || 0) : 0;
+        const firstName = client.first_name || "";
+        const lastName = client.last_name || "";
+        const fallbackName = [firstName, lastName].filter(Boolean).join(" ") || client.name || client.username || "Client";
+
+        return {
+            ...client,
+            displayName: fallbackName,
+            counts: {
+                pickup: pickupCount,
+                quote: quoteCount,
+                contact: contactCount
+            },
+            totalRequests: pickupCount + quoteCount + contactCount
+        };
+    }));
+
+    return clients.sort(function(left, right){
+        return String(right.displayName || "").localeCompare(String(left.displayName || ""));
+    });
+}
+
+function renderOwnerClientDirectory(clientList){
+    const directoryList = document.getElementById("ownerClientDirectoryList");
+    if(!directoryList){
+        return;
+    }
+
+    const clients = Array.isArray(clientList) ? clientList : [];
+    if(!clients.length){
+        directoryList.innerHTML = `
+            <div class="empty-state">
+                <h3>No clients found</h3>
+                <p>No current clients are available for this business.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const maxActivity = Math.max(1, ...clients.map(function(client){
+        return Number(client.totalRequests || 0);
+    }));
+
+    directoryList.innerHTML = `
+        <table class="owner-client-table">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Email</th>
+                    <th>Username</th>
+                    <th>Requests</th>
+                    <th>Pickups</th>
+                    <th>Quotes</th>
+                    <th>Contact</th>
+                    <th>Activity</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${clients.map(function(client){
+                    const pickupCount = Number(client.counts && client.counts.pickup || 0);
+                    const quoteCount = Number(client.counts && client.counts.quote || 0);
+                    const contactCount = Number(client.counts && client.counts.contact || 0);
+                    const totalRequests = Number(client.totalRequests || pickupCount + quoteCount + contactCount);
+                    const activityWidth = Math.max(10, (totalRequests / maxActivity) * 100);
+
+                    return `
+                        <tr>
+                            <td>
+                                <div class="owner-client-name">${escapeHtml(client.displayName || "Client")}</div>
+                            </td>
+                            <td class="owner-client-mono">${escapeHtml(client.email || "No email")}</td>
+                            <td class="owner-client-mono">${escapeHtml(client.username || "No username")}</td>
+                            <td><span class="owner-client-pill">${totalRequests}</span></td>
+                            <td>${pickupCount}</td>
+                            <td>${quoteCount}</td>
+                            <td>${contactCount}</td>
+                            <td>
+                                <div class="owner-client-mini-chart">
+                                    <div class="owner-client-mini-metric">
+                                        <span>Activity</span>
+                                        <div class="owner-client-mini-bar-track">
+                                            <div class="owner-client-mini-bar" style="width:${activityWidth}%"></div>
+                                        </div>
+                                        <strong>${totalRequests}</strong>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join("")}
+            </tbody>
+        </table>
+    `;
+}
+
+function buildOwnerClientMiniChart(client){
+    const activity = [
+        { label: "Pickups", value: Number(client && client.counts && client.counts.pickup || 0) },
+        { label: "Quotes", value: Number(client && client.counts && client.counts.quote || 0) },
+        { label: "Contact", value: Number(client && client.counts && client.counts.contact || 0) }
+    ];
+    const maxValue = Math.max(1, ...activity.map(function(item){ return item.value; }));
+
+    return `
+        <div class="owner-client-mini-chart" aria-label="Client activity chart">
+            ${activity.map(function(item){
+                const percentage = Math.max(8, (item.value / maxValue) * 100);
+                return `
+                    <div class="owner-client-mini-metric">
+                        <span>${escapeHtml(item.label)}</span>
+                        <div class="owner-client-mini-bar-track">
+                            <div class="owner-client-mini-bar" style="width:${percentage}%"></div>
+                        </div>
+                        <strong>${item.value}</strong>
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+function buildOwnerClientActivityChart(client){
+    const chart = document.getElementById("ownerClientActivityChart");
+    if(!chart){
+        return;
+    }
+
+    const activity = [
+        { label: "This week", value: Number(client && client.counts && client.counts.pickup || 0) + Number(client && client.counts && client.counts.quote || 0) + Number(client && client.counts && client.counts.contact || 0) },
+        { label: "Last 30d", value: Math.max(1, Number(client && client.totalRequests || 0)) },
+        { label: "Pickup", value: Number(client && client.counts && client.counts.pickup || 0) },
+        { label: "Quote", value: Number(client && client.counts && client.counts.quote || 0) },
+        { label: "Contact", value: Number(client && client.counts && client.counts.contact || 0) }
+    ];
+
+    const maxValue = Math.max(1, ...activity.map(function(item){ return item.value; }));
+
+    chart.innerHTML = `
+        <div class="owner-client-activity-scroll">
+            ${activity.map(function(item){
+                const percentage = Math.max(8, (item.value / maxValue) * 100);
+                return `
+                    <div class="owner-client-activity-row">
+                        <div class="owner-client-activity-date">${escapeHtml(item.label)}</div>
+                        <div class="owner-client-activity-bar-wrap">
+                            <div class="owner-client-activity-bar" style="width:${percentage}%"></div>
+                        </div>
+                        <div class="owner-client-activity-label">${item.value}</div>
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `;
+
+    chart.classList.remove("hidden");
+}
+
+function openOwnerClientDetail(client){
+    const modal = document.getElementById("ownerClientDetailModal");
+    const content = document.getElementById("ownerClientDetailContent");
+    if(!modal || !content || !client){
+        return;
+    }
+
+    const pickupCount = Number(client.counts && client.counts.pickup || 0);
+    const quoteCount = Number(client.counts && client.counts.quote || 0);
+    const contactCount = Number(client.counts && client.counts.contact || 0);
+    const totalRequests = Number(client.totalRequests || pickupCount + quoteCount + contactCount);
+    const joinedAt = client.created_at ? new Date(client.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Unknown";
+
+    content.innerHTML = `
+        <div class="owner-client-detail-header">
+            <h4>${escapeHtml(client.displayName || "Client")}</h4>
+            <div class="owner-client-detail-metadata">
+                <div><strong>Email:</strong> ${escapeHtml(client.email || "No email")}</div>
+                <div><strong>Username:</strong> ${escapeHtml(client.username || "No username")}</div>
+                <div><strong>Joined:</strong> ${escapeHtml(joinedAt)}</div>
+            </div>
+        </div>
+        <div class="owner-client-detail-grid">
+            <div class="owner-client-detail-metric"><span>Pickups</span><strong>${pickupCount}</strong></div>
+            <div class="owner-client-detail-metric"><span>Quotes</span><strong>${quoteCount}</strong></div>
+            <div class="owner-client-detail-metric"><span>Contact</span><strong>${contactCount}</strong></div>
+            <div class="owner-client-detail-metric"><span>Total requests</span><strong>${totalRequests}</strong></div>
+        </div>
+    `;
+
+    buildOwnerClientActivityChart(client);
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+}
+
+function bindOwnerClientDirectoryEvents(){
+    const modal = document.getElementById("ownerClientDetailModal");
+    if(modal && !modal.dataset.ownerClientModalBound){
+        modal.dataset.ownerClientModalBound = "true";
+        modal.querySelectorAll("[data-close-owner-client-detail]").forEach(function(button){
+            button.addEventListener("click", function(){
+                const chart = document.getElementById("ownerClientActivityChart");
+                modal.classList.add("hidden");
+                modal.setAttribute("aria-hidden", "true");
+                if(chart){
+                    chart.classList.add("hidden");
+                    chart.innerHTML = "";
+                }
+            });
+        });
+    }
+}
+
+async function loadOwnerClientDirectory(){
+    const directoryList = document.getElementById("ownerClientDirectoryList");
+    if(!directoryList){
+        return;
+    }
+
+    bindOwnerClientDirectoryEvents();
+
+    const clients = await fetchOwnerClientDirectory();
+    window.ownerClientDirectoryCache = clients;
+    renderOwnerClientDirectory(clients);
+}
+
 async function loadDashboard(){
     initOwnerAveryDashboard();
 
@@ -2036,6 +2528,7 @@ async function loadDashboard(){
     renderPickupCalendar();
     updateOverview(requests);
     renderDashboardAnalytics();
+    loadOwnerClientDirectory();
 }
 
 function updateOverview(requests){

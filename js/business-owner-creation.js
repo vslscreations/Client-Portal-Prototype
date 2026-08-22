@@ -251,13 +251,15 @@
         };
       }
 
-      var result = await global.supabaseClient.functions.invoke("create-client", {
+      var result = await global.supabaseClient.functions.invoke("create-business-client", {
         body: {
-          first_name: validation.values.firstName,
-          last_name: validation.values.lastName,
+          firstName: validation.values.firstName,
+          lastName: validation.values.lastName,
           email: validation.values.email,
+          phone: validation.values.phone,
           username: validation.values.username,
-          temporary_password: validation.values.temporaryPassword
+          temporaryPassword: validation.values.temporaryPassword,
+          confirmTemporaryPassword: validation.values.confirmTemporaryPassword
         }
       });
 
@@ -507,6 +509,10 @@
       if (clientSection) {
         clientSection.classList.add("hidden");
       }
+
+      if (typeof global.loadOwnerClientDirectory === "function") {
+        await global.loadOwnerClientDirectory();
+      }
     } catch (error) {
       if (feedback) {
         feedback.textContent = error && error.message ? error.message : "Unable to invite the client.";
@@ -563,7 +569,7 @@
 
     var clientDoneButton = global.document.getElementById("businessClientDoneButton");
     if (clientDoneButton) {
-      clientDoneButton.addEventListener("click", function () {
+      clientDoneButton.addEventListener("click", async function () {
         var modal = global.document.getElementById("businessClientModal");
         if (modal) {
           modal.classList.add("hidden");
@@ -576,10 +582,16 @@
         var formSection = global.document.getElementById("businessClientFormSection");
         if (formSection) {
           formSection.classList.remove("hidden");
-        }        var successSummary = global.document.getElementById("businessClientSuccessSummary");
+        }
+        var successSummary = global.document.getElementById("businessClientSuccessSummary");
         if (successSummary) {
           successSummary.innerHTML = "";
-        }      });
+        }
+
+        if (typeof global.loadOwnerClientDirectory === "function") {
+          await global.loadOwnerClientDirectory();
+        }
+      });
     }
 
     var openClientModalButton = global.document.getElementById("openCreateBusinessClientModal");

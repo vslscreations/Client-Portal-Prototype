@@ -55,6 +55,13 @@ assert.throws(() => {
   });
 }, /does not allow the field "tracking_number"/i);
 
+const exactFixturePickup = validateToolRequest('lookup_pickup', {
+  tracking_number: 'dl-20260812-00006'
+});
+assert.deepEqual(exactFixturePickup.filters, {
+  tracking_number: 'DL-20260812-00006'
+});
+
 const pickup = validateToolRequest('lookup_pickup', {
   tracking_number: 'DL-123'
 });

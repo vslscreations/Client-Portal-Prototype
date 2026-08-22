@@ -79,6 +79,11 @@
         <div class="business-owner-summary">
             <p>Manage the customers who have access to your DasherLab portal.</p>
         </div>
+        <div class="business-owner-client-panel">
+            <div id="ownerClientDirectoryList" class="owner-client-directory-list" aria-live="polite">
+                <p>Loading clients...</p>
+            </div>
+        </div>
     </div>
 
     <div class="dashboard-card">
@@ -136,10 +141,12 @@
             <button type="button" class="request-tab request-type-tab active" data-request-type="pickup" role="tab" aria-selected="true">Pickup Requests</button>
             <button type="button" class="request-tab request-type-tab" data-request-type="quote" role="tab" aria-selected="false">Quote Requests</button>
             <button type="button" class="request-tab request-type-tab" data-request-type="contact" role="tab" aria-selected="false">Contact Requests</button>
+            <button type="button" id="requestArchiveToggle" class="request-tab request-folder-button" aria-pressed="false">Dismissed Archive</button>
         </div>
 
         <div class="request-tabs request-status-tabs" role="tablist" aria-label="Request status filters">
-            <button type="button" class="request-tab request-status-tab active" data-filter="active" role="tab" aria-selected="true">Awaiting Dispatch + Active</button>
+            <button type="button" class="request-tab request-status-tab active" data-filter="awaiting-dispatch" role="tab" aria-selected="true">Awaiting Dispatch</button>
+            <button type="button" class="request-tab request-status-tab" data-filter="active" role="tab" aria-selected="false">Active</button>
             <button type="button" class="request-tab request-status-tab" data-filter="completed" role="tab" aria-selected="false">Completed</button>
         </div>
 
@@ -214,7 +221,21 @@
         </form>
     </div>
 </div>
+<div id="ownerClientDetailModal" class="business-create-modal hidden" aria-hidden="true">
+    <div class="business-create-backdrop" data-close-owner-client-detail="true"></div>
+    <div class="business-create-dialog" role="dialog" aria-modal="true" aria-labelledby="ownerClientDetailTitle">
+        <div class="business-create-header">
+            <div>
+                <p class="business-create-kicker">Client Profile</p>
+                <h3 id="ownerClientDetailTitle">Client Details</h3>
+            </div>
+            <button type="button" class="business-create-close" data-close-owner-client-detail="true" aria-label="Close client details">✕</button>
+        </div>
+        <div id="ownerClientDetailContent" class="owner-client-detail-content"></div>
+    </div>
+</div>
 
+<div id="ownerClientActivityChart" class="owner-client-activity-chart hidden" aria-live="polite"></div>
 <div id="businessCreateModal" class="business-create-modal hidden" aria-hidden="true">
     <div class="business-create-backdrop" data-close-business-create-modal="true"></div>
     <div class="business-create-dialog" role="dialog" aria-modal="true" aria-labelledby="businessCreateTitle">
@@ -376,7 +397,7 @@ function showOwnerAccessNotice() {
 
         const userResult = await window.supabaseClient
             .from("users")
-            .select("id, role")
+            .select("id, role, business_id")
             .eq("id", session.user.id)
             .maybeSingle();
 
@@ -386,7 +407,8 @@ function showOwnerAccessNotice() {
         }
 
         const role = String(userResult.data.role).toLowerCase();
-        if (role !== "owner") {
+        const businessId = userResult.data.business_id;
+        if (role !== "owner" || !businessId) {
             showOwnerAccessNotice();
             return;
         }
